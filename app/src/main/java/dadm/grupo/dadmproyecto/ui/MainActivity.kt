@@ -1,4 +1,4 @@
-package dadm.grupo.dadmproyecto
+package dadm.grupo.dadmproyecto.ui
 
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
