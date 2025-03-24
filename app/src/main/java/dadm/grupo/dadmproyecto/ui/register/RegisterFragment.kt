@@ -1,4 +1,4 @@
-package dadm.grupo.dadmproyecto.ui.login
+package dadm.grupo.dadmproyecto.ui.register
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -6,31 +6,30 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
-import dadm.grupo.dadmproyecto.databinding.FragmentLoginBinding
 import dadm.grupo.dadmproyecto.R
+import dadm.grupo.dadmproyecto.databinding.FragmentRegisterBinding
 
-class LoginFragment : Fragment(R.layout.fragment_login) {
-
-    private var _binding: FragmentLoginBinding? = null
+class RegisterFragment : Fragment(R.layout.fragment_register) {
+    private var _binding: FragmentRegisterBinding? = null
     private val binding get() = _binding!!
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         // Configurar el click listener para el botón de registro
-        binding.btnGoToRegister.setOnClickListener {
-            navigateToRegister()
+        binding.btnBackToLogin.setOnClickListener {
+            navigateToLogin()
         }
 
         // Configurar el botón de login (opcional)
-        binding.btnLogin.setOnClickListener {
+        binding.btnRegister.setOnClickListener {
             // Aquí iría tu lógica de autenticación
         }
     }
 
-    private fun navigateToRegister() {
-        // Navegar al RegisterFragment usando Navigation Component
-        findNavController().navigate(R.id.actionLoginFragmentToRegisterFragment)
+
+    private fun navigateToLogin() {
+        findNavController().navigate(R.id.actionRegisterFragmentToLoginFragment)
     }
 
     override fun onCreateView(
@@ -38,9 +37,11 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentLoginBinding.inflate(inflater, container, false)
+        _binding = FragmentRegisterBinding.inflate(inflater, container, false)
         return binding.root
     }
+
+
 
     override fun onDestroyView() {
         super.onDestroyView()

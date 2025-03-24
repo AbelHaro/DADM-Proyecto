@@ -10,4 +10,13 @@
         android:name="dadm.grupo.dadmproyecto.ui.login.LoginFragment"
         android:label="LoginFragment"
         tools:layout="@layout/fragment_login" />
+    <action android:id="@+id/actionLoginFragmentToRegisterFragment"
+        app:destination="@id/registerFragment" />
+    <fragment
+        android:id="@+id/registerFragment"
+        android:name="dadm.grupo.dadmproyecto.ui.register.RegisterFragment"
+        android:label="RegisterFragment"
+        tools:layout="@layout/fragment_register" />
+    <action android:id="@+id/actionRegisterFragmentToLoginFragment"
+        app:destination="@id/loginFragment" />
 </navigation>
