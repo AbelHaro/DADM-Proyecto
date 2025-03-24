@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace = "dadm.ahararm.quotationshake"
+    namespace = "dadm.grupo.dadmproyecto"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "dadm.ahararm.quotationshake"
+        applicationId = "dadm.grupo.dadmproyecto"
         minSdk = 26
         targetSdk = 35
         versionCode = 1
