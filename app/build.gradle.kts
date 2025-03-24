@@ -1,14 +1,16 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.hilt)
+    alias(libs.plugins.devtools)
 }
 
 android {
-    namespace = "dadm.grupo.dadmproyecto"
+    namespace = "dadm.ahararm.quotationshake"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "dadm.grupo.dadmproyecto"
+        applicationId = "dadm.ahararm.quotationshake"
         minSdk = 26
         targetSdk = 35
         versionCode = 1
@@ -33,6 +35,9 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
+    buildFeatures {
+        viewBinding = true
+    }
 }
 
 dependencies {
@@ -45,4 +50,23 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    implementation(libs.hilt.lib)
+    ksp(libs.hilt.compiler)
+
+    implementation(libs.androidx.navigation.ui.ktx)
+    implementation(libs.androidx.navigation.fragment.ktx)
+    implementation(libs.androidx.swiperefreshlayout)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+
+    implementation(libs.moshi.kotlin)
+    implementation(libs.moshi.kotlin.codegen)
+    implementation(libs.retrofit)
+    implementation(libs.converter.moshi)
+
+    implementation(libs.androidx.preference.ktx)
+    implementation(libs.androidx.datastore.preferences)
+
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.roomcompiler)
 }
