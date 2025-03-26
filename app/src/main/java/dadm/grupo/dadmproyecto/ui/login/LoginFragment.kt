@@ -1,13 +1,15 @@
 package dadm.grupo.dadmproyecto.ui.login
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
-import dadm.grupo.dadmproyecto.databinding.FragmentLoginBinding
 import dadm.grupo.dadmproyecto.R
+import dadm.grupo.dadmproyecto.databinding.FragmentLoginBinding
+import dadm.grupo.dadmproyecto.ui.MainActivity
 
 class LoginFragment : Fragment(R.layout.fragment_login) {
 
@@ -17,14 +19,20 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Configurar el click listener para el botón de registro
         binding.btnGoToRegister.setOnClickListener {
             navigateToRegister()
         }
 
-        // Configurar el botón de login (opcional)
+
         binding.btnLogin.setOnClickListener {
             // Aquí iría tu lógica de autenticación
+        }
+
+        binding.tvGoToMainActivity.setOnClickListener {
+            binding.tvGoToMainActivity.setOnClickListener {
+                val intent = Intent(requireActivity(), MainActivity::class.java)
+                startActivity(intent)
+            }
         }
     }
 
