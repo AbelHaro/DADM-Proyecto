@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main_navigation"
+    app:startDestination="@id/fDestinationMapFragment">
+
+    <fragment
+        android:id="@+id/fDestinationMapFragment"
+        android:name="dadm.grupo.dadmproyecto.ui.destinationmap.DestinationMapFragment"
+        android:label="DestinationMapFragment"
+        tools:layout="@layout/fragment_destination_map" />
+    <fragment
+        android:id="@+id/fRankingFragment"
+        android:name="dadm.grupo.dadmproyecto.ui.ranking.RankingFragment"
+        android:label="RankingFragment"
+        tools:layout="@layout/fragment_ranking" />
+
+</navigation>

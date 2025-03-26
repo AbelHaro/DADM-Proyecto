@@ -28,8 +28,8 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
             // Aquí iría tu lógica de autenticación
         }
 
-        binding.tvGoToMainActivity.setOnClickListener {
-            binding.tvGoToMainActivity.setOnClickListener {
+        binding.btnGoToMainActivity.setOnClickListener {
+            binding.btnGoToMainActivity.setOnClickListener {
                 val intent = Intent(requireActivity(), MainActivity::class.java)
                 startActivity(intent)
             }
