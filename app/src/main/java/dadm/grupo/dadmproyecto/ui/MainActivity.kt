@@ -7,6 +7,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.ui.setupWithNavController
 import dadm.grupo.dadmproyecto.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
@@ -22,6 +23,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         navController = binding.fcvActivityMain.getFragment<NavHostFragment>().navController
+        binding.bnvActivityMain.setupWithNavController(navController)
 
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, insets ->
