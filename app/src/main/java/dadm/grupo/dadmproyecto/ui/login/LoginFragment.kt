@@ -7,77 +7,19 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
-import com.google.firebase.Firebase
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.initialize
 import dadm.grupo.dadmproyecto.R
 import dadm.grupo.dadmproyecto.databinding.FragmentLoginBinding
 import dadm.grupo.dadmproyecto.ui.MainActivity
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class LoginFragment : Fragment(R.layout.fragment_login) {
 
     private var _binding: FragmentLoginBinding? = null
     private val binding get() = _binding!!
-
-    private lateinit var firebaseAuth: FirebaseAuth
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
-        firebaseAuth = FirebaseAuth.getInstance()
-
-        binding.btnGoToRegister.setOnClickListener {
-            navigateToRegister()
-        }
-
-
-        binding.btnLogin.setOnClickListener {
-            val email = binding.etUsername.text.toString()
-            val password = binding.etPassword.text.toString()
-            if (email.isNotEmpty() && password.isNotEmpty()) {
-                firebaseAuth.signInWithEmailAndPassword(email, password)
-                    .addOnCompleteListener { task ->
-                        if (task.isSuccessful) {
-                            // Inicio de sesión exitoso
-                            val intent = Intent(requireActivity(), MainActivity::class.java)
-                            startActivity(intent)
-                        } else {
-                            // Manejar el error de inicio de sesión
-                            Toast(requireContext()).apply {
-                                setText("Error al iniciar sesión: ${task.exception?.message}")
-                                show()
-                            }
-                        }
-                    }
-            } else {
-                // Manejar el caso en que los campos están vacíos
-                Toast(requireContext()).apply {
-                    setText("Por favor, completa todos los campos")
-                    show()
-                }
-            }
-
-        }
-
-        binding.btnGoToMainActivity.setOnClickListener {
-            binding.btnGoToMainActivity.setOnClickListener {
-                val intent = Intent(requireActivity(), MainActivity::class.java)
-                startActivity(intent)
-            }
-        }
-
-        binding.btnGoogleSignIn.setOnClickListener {
-            // Aquí iría tu lógica de inicio de sesión con Google
-            Firebase.initialize(requireContext())
-
-        }
-    }
-
-    private fun navigateToRegister() {
-        // Navegar al RegisterFragment usando Navigation Component
-        findNavController().navigate(R.id.actionLoginFragmentToRegisterFragment)
-    }
+    private val viewModel: LoginViewModel by viewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -88,8 +30,72 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
         return binding.root
     }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        setupClickListeners()
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    private fun setupClickListeners() {
+        binding.btnGoToRegister.setOnClickListener { navigateToRegister() }
+        binding.btnLogin.setOnClickListener { handleLogin() }
+        binding.btnGoToMainActivity.setOnClickListener { navigateToMainActivity() }
+        binding.btnGoogleSignIn.setOnClickListener { handleGoogleSignIn() }
+    }
+
+    private fun handleLogin() {
+        val email = binding.etUsername.text.toString().trim()
+        val password = binding.etPassword.text.toString()
+
+        when {
+            email.isEmpty() || password.isEmpty() -> {
+                showToast(getString(R.string.login_error_empty_fields))
+                return
+            }
+
+            !isValidEmail(email) -> {
+                showToast(getString(R.string.login_error_invalid_email))
+                return
+            }
+
+            else -> {
+                viewModel.loginUser(email, password) { success, errorMessage ->
+                    if (success) {
+                        navigateToMainActivity()
+                    } else {
+                        showToast(
+                            getString(
+                                R.string.login_error_authentication_failed,
+
+                                ) + errorMessage.toString()
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private fun navigateToRegister() {
+        findNavController().navigate(R.id.actionLoginFragmentToRegisterFragment)
+    }
+
+    private fun navigateToMainActivity() {
+        startActivity(Intent(requireActivity(), MainActivity::class.java))
+    }
+
+    private fun handleGoogleSignIn() {
+        showToast(getString(R.string.login_google_sign_in_not_implemented))
+    }
+
+    private fun isValidEmail(email: String): Boolean {
+        return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+    }
+
+    private fun showToast(message: String, duration: Int = Toast.LENGTH_SHORT) {
+        Toast.makeText(requireContext(), message, duration).show()
     }
 }

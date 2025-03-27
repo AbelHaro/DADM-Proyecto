@@ -16,4 +16,16 @@
     <string name="register_error_weak_password">The password must be 8 characters long including letters and numbers</string>
     <string name="register_error_password_mismatch">The passwords don\'t match</string>
     <string name="register_error_registration_failed">The registration has failed</string>
+    <string name="login_error_empty_fields">Please fill in all fields</string>
+    <string name="login_error_invalid_email">Please enter a valid email address</string>
+    <string name="login_error_authentication_failed">Login failed: </string>
+    <string name="login_google_sign_in_not_implemented">Google Sign-In is not yet implemented</string>
+    <string name="exit_dialog_title">Exit application</string>
+    <string name="exit_dialog_message">Are you sure you want to exit?</string>
+    <string name="exit_dialog_positive">Yes</string>
+    <string name="exit_dialog_negative">No</string>
+    <string name="logout_dialog_title">Confirm Logout</string>
+    <string name="logout_dialog_message">Are you sure you want to log out?</string>
+    <string name="logout_dialog_positive">Yes</string>
+    <string name="logout_dialog_negative">Cancel</string>
 </resources>
