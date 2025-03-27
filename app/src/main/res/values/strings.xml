@@ -10,4 +10,10 @@
     <string name="register">Register</string>
     <string name="no_account_prompt">Don\'t have an account?</string>
     <string name="back_to_login">Back to login\n</string>
+    <string name="sign_in_with_google">Sign In with Google</string>
+    <string name="register_error_empty_fields">All fields must be completed</string>
+    <string name="register_error_invalid_email">Invalid email format</string>
+    <string name="register_error_weak_password">The password must be 8 characters long including letters and numbers</string>
+    <string name="register_error_password_mismatch">The passwords don\'t match</string>
+    <string name="register_error_registration_failed">The registration has failed</string>
 </resources>
