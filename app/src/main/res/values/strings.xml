@@ -2,6 +2,7 @@
     <string name="app_name">DADMProyecto</string>
     <string name="login">Login</string>
     <string name="username">Username\n</string>
+    <string name="mail">Mail\n</string>
     <string name="password">Password</string>
     <string name="loginTitle">Log into your account</string>
     <string name="registerTitle">Create your account</string>
@@ -28,4 +29,8 @@
     <string name="logout_dialog_message">Are you sure you want to log out?</string>
     <string name="logout_dialog_positive">Yes</string>
     <string name="logout_dialog_negative">Cancel</string>
+    <string name="register_error_unknown">Unknown error on register</string>
+    <string name="register_success">User registered, confirm your email</string>
+    <string name="login_error_unknown">Unknown error in login</string>
+    <string name="login_error_email_not_verified">>Email not verified</string>
 </resources>

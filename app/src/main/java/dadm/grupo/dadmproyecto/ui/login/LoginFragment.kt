@@ -43,7 +43,8 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
     private fun setupClickListeners() {
         binding.btnGoToRegister.setOnClickListener { navigateToRegister() }
         binding.btnLogin.setOnClickListener { handleLogin() }
-        binding.btnGoToMainActivity.setOnClickListener { navigateToMainActivity() }
+        binding.btnGoToMainActivityUnlogged.setOnClickListener { navigateToMainActivity() }
+        binding.btnGoToMainActivityLogged.setOnClickListener { navigateToMainActivityLogged() }
         binding.btnGoogleSignIn.setOnClickListener { handleGoogleSignIn() }
     }
 
@@ -85,6 +86,23 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
 
     private fun navigateToMainActivity() {
         startActivity(Intent(requireActivity(), MainActivity::class.java))
+    }
+
+    private fun navigateToMainActivityLogged() {
+        val email = "test@test.com"
+        val password = "Test1234"
+
+        viewModel.loginUserTestNoEmailVerifed(email, password) { success, errorMessage ->
+            if (success) {
+                navigateToMainActivity()
+            } else {
+                showToast(
+                    getString(
+                        R.string.login_error_authentication_failed,
+                    ) + errorMessage.toString()
+                )
+            }
+        }
     }
 
     private fun handleGoogleSignIn() {
