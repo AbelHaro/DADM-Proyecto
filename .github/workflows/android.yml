@@ -1,0 +1,27 @@
+name: Android CI
+
+on:
+  push:
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout del código
+      uses: actions/checkout@v4 # Clona el repositorio en el entorno de GitHub Actions
+
+    - name: Configurar JDK 11
+      uses: actions/setup-java@v4
+      with:
+        java-version: '11' 
+        distribution: 'temurin'
+        cache: gradle # Se habilita la caché de Gradle para acelerar futuras ejecuciones
+
+    - name: Conceder permisos de ejecución a Gradle
+      run: chmod +x gradlew # Asegura que el script 'gradlew' tenga permisos de ejecución
+
+    - name: Compilar con Gradle
+      run: ./gradlew build # Ejecuta el comando de compilación del proyecto
