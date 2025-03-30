@@ -21,17 +21,15 @@ jobs:
           distribution: 'temurin'
           cache: gradle # Usa caché de Gradle para acelerar futuras compilaciones
 
-      - name: Crear google-services.json desde Secret (si existe)
+      - name: Verificar existencia de google-services.json
         run: |
           if [ -z "${{ secrets.GOOGLE_SERVICES_JSON }}" ]; then
             echo "No existe GOOGLE_SERVICES_JSON, creando google-services.json vacío"
             echo "{}" > app/google-services.json
           else
+            echo "GOOGLE_SERVICES_JSON existe, creando google-services.json con su contenido"
             echo "${{ secrets.GOOGLE_SERVICES_JSON }}" > app/google-services.json
           fi
-
-      - name: Verificar existencia de google-services.json
-        run: ls -l app/google-services.json && cat app/google-services.json
 
       - name: Conceder permisos de ejecución a Gradle
         run: chmod +x gradlew # Permisos necesarios para ejecutar Gradle
