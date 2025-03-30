@@ -2,8 +2,9 @@ name: Android CI
 
 on:
   push:
+    branches: [ "**" ] # Se ejecuta en cualquier branch
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main" ] # También en PRs a main
 
 jobs:
   build:
@@ -11,17 +12,27 @@ jobs:
 
     steps:
       - name: Checkout del código
-        uses: actions/checkout@v4 # Clona el repositorio en el entorno de GitHub Actions
+        uses: actions/checkout@v4 # Clona el código en el runner
 
       - name: Configurar JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: gradle # Se habilita la caché de Gradle para acelerar futuras ejecuciones
+          cache: gradle # Usa caché de Gradle para acelerar futuras compilaciones
+
+      - name: Crear google-services.json desde Secret
+        if: env.GOOGLE_SERVICES_JSON != ''
+        run: echo "${{ secrets.GOOGLE_SERVICES_JSON }}" > app/google-services.json
 
       - name: Conceder permisos de ejecución a Gradle
-        run: chmod +x gradlew # Asegura que el script 'gradlew' tenga permisos de ejecución
+        run: chmod +x gradlew # Permisos necesarios para ejecutar Gradle
 
       - name: Compilar con Gradle
-        run: ./gradlew build # Ejecuta el comando de compilación del proyecto
+        run: ./gradlew build test # Compila y ejecuta pruebas unitarias
+
+      - name: Guardar artefactos de compilación
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: app/build/outputs/
