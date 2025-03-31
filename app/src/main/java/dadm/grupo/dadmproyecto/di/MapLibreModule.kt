@@ -7,6 +7,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import org.maplibre.android.MapLibre
+import org.maplibre.android.WellKnownTileServer
 import javax.inject.Singleton
 
 @Module
@@ -16,6 +17,6 @@ object MapLibreModule {
     @Provides
     @Singleton
     fun provideMapLibre(@ApplicationContext context: Context): MapLibre {
-        return MapLibre.getInstance(context)
+        return MapLibre.getInstance(context, null, WellKnownTileServer.MapLibre)
     }
 }

@@ -1,0 +1,26 @@
+{
+  "version": 8,
+  "name": "OSM Base (No Labels)",
+  "sources": {
+    "osm": {
+      "type": "raster",
+      "tiles": [
+        "https://a.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png"
+      ],
+      "tileSize": 256,
+      "attribution": "© OpenStreetMap, Carto"
+    }
+  },
+  "layers": [
+    {
+      "id": "osm-layer",
+      "type": "raster",
+      "source": "osm",
+      "minzoom": 0,
+      "maxzoom": 22,
+      "layout": {
+        "visibility": "visible"
+      }
+    }
+  ]
+}
