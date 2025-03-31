@@ -14,13 +14,27 @@ import dadm.grupo.dadmproyecto.databinding.FragmentDestinationMapBinding
 import dadm.grupo.dadmproyecto.ui.AuthActivity
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import org.maplibre.android.MapLibre
+import org.maplibre.android.WellKnownTileServer
+import org.maplibre.android.camera.CameraPosition
+import org.maplibre.android.geometry.LatLng
+import org.maplibre.android.geometry.LatLngBounds
+import org.maplibre.android.maps.MapLibreMap
+import org.maplibre.android.maps.OnMapReadyCallback
+import org.maplibre.android.maps.Style
 
 @AndroidEntryPoint
-class DestinationMapFragment : Fragment() {
+class DestinationMapFragment : Fragment(), OnMapReadyCallback {
 
     private var _binding: FragmentDestinationMapBinding? = null
     private val binding get() = _binding!!
     private val viewModel: DestinationMapViewModel by viewModels()
+    private var mapLibreMap: MapLibreMap? = null
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        MapLibre.getInstance(requireContext(), null, WellKnownTileServer.MapLibre)
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -33,55 +47,68 @@ class DestinationMapFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        // Inicializar el mapa
+        binding.mapView.onCreate(savedInstanceState)
+        binding.mapView.getMapAsync(this)
+
         setupObservers()
-        setupListeners()
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
+    override fun onMapReady(map: MapLibreMap) {
+        mapLibreMap = map
+        map.setStyle(
+            Style.Builder().fromUri("https://tiles.openfreemap.org/styles/liberty")
+
+        ) { style ->
+            setupMapControls()
+            loadMarkers()
+        }
+
+        map.cameraPosition =
+            CameraPosition.Builder().target(LatLng(39.481096, -0.341373)).zoom(10.0).build()
+
+        val bounds = LatLngBounds.Builder()
+            .include(LatLng(39.481096, -0.341373))
+            .include(LatLng(39.492096, -0.340373))
+            .build()
+
+        map.getCameraForLatLngBounds(bounds)?.let {
+            map.cameraPosition = it
+        }
+    }
+
+    private fun setupMapControls() {
+        mapLibreMap?.uiSettings?.apply {
+            isCompassEnabled = true
+            isZoomGesturesEnabled = true
+            isScrollGesturesEnabled = true
+        }
+    }
+
+    private fun loadMarkers() {
+        viewModel.markers.value.forEach { latLng ->
+            mapLibreMap?.addMarker(
+                org.maplibre.android.annotations.MarkerOptions()
+                    .position(latLng)
+                    .title("Marcador")
+            )
+        }
     }
 
     private fun setupObservers() {
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                launch {
-                    viewModel.userData.collect { user ->
-                        user?.let {
-                            binding.tvFragmentDestinationMap.text = buildString {
-                                appendLine("Información del usuario:")
-                                appendLine("Email: ${viewModel.getUserEmail()}")
-                                appendLine("Nombre: ${viewModel.getUserDisplayName()}")
-                                appendLine("ID: ${viewModel.getUserId()}")
-                            }
-                        }
-                    }
-                }
 
-                launch {
-                    viewModel.errorMessage.collect { error ->
-                        error?.let {
-                            binding.tvFragmentDestinationMap.text = it
-                        }
-                    }
-                }
 
                 launch {
                     viewModel.navigationEvent.collect { event ->
-                        when (event) {
-                            is DestinationMapViewModel.NavigationEvent.NavigateToAuth -> {
-                                navigateToAuth()
-                            }
+                        if (event is DestinationMapViewModel.NavigationEvent.NavigateToAuth) {
+                            navigateToAuth()
                         }
                     }
                 }
             }
-        }
-    }
-
-    private fun setupListeners() {
-        binding.btnLogout.setOnClickListener {
-            viewModel.logout()
         }
     }
 
@@ -92,5 +119,43 @@ class DestinationMapFragment : Fragment() {
             startActivity(intent)
             requireActivity().finish()
         }
+    }
+
+    // Métodos del ciclo de vida del MapView
+    override fun onStart() {
+        super.onStart()
+        binding.mapView.onStart()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        binding.mapView.onResume()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        binding.mapView.onPause()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        binding.mapView.onStop()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        binding.mapView.onDestroy()
+        _binding = null
+        mapLibreMap = null
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        binding.mapView.onSaveInstanceState(outState)
+    }
+
+    override fun onLowMemory() {
+        super.onLowMemory()
+        binding.mapView.onLowMemory()
     }
 }
