@@ -1,8 +1,15 @@
 package dadm.grupo.dadmproyecto.ui
 
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -13,11 +20,19 @@ import dadm.grupo.dadmproyecto.R
 import dadm.grupo.dadmproyecto.databinding.ActivityMainBinding
 import dagger.hilt.android.AndroidEntryPoint
 
+
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
     private lateinit var navController: NavController
     private lateinit var binding: ActivityMainBinding
+
+    private val requestPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (!isGranted) {
+                showPermissionDeniedDialog()
+            }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,17 +49,29 @@ class MainActivity : AppCompatActivity() {
             view.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
+        checkAndRequestLocationPermission()
     }
 
     override fun onSupportNavigateUp(): Boolean {
         return navController.navigateUp() || super.onSupportNavigateUp()
     }
-    
+
     override fun onBackPressed() {
+        super.onBackPressed()
         if (navController.currentDestination?.id == R.id.fDestinationMapFragment) {
             showExitConfirmationDialog()
         } else {
-            super.onBackPressed() // Let Navigation Component handle back press
+            onBackPressedDispatcher.onBackPressed() // Uso correcto en nuevas versiones de Android
+        }
+    }
+
+    private fun checkAndRequestLocationPermission() {
+        if (ActivityCompat.checkSelfPermission(
+                this, Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
         }
     }
 
@@ -62,4 +89,31 @@ class MainActivity : AppCompatActivity() {
             .create()
             .show()
     }
+
+    private fun showPermissionDeniedDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("Permiso de Ubicación Necesario")
+            .setMessage(
+                "Esta aplicación necesita acceso a tu ubicación para funcionar correctamente. " +
+                        "Por favor, concede el permiso en los ajustes de la aplicación."
+            )
+            .setPositiveButton("Ir a Ajustes") { _, _ ->
+                openAppSettings()
+            }
+            .setNegativeButton("Cancelar") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .setCancelable(false) // Evita que el usuario lo cierre sin elegir una opción
+            .create()
+            .show()
+    }
+
+    private fun openAppSettings() {
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = Uri.fromParts("package", packageName, null)
+        }
+        startActivity(intent)
+    }
+
+
 }

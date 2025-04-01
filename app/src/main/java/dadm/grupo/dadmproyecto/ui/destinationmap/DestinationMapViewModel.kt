@@ -1,6 +1,11 @@
 package dadm.grupo.dadmproyecto.ui.destinationmap
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
+import android.location.Location
+import android.location.LocationManager
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
@@ -20,9 +25,14 @@ import javax.inject.Inject
 @HiltViewModel
 class DestinationMapViewModel @Inject constructor(
     private val firebaseAuth: FirebaseAuth,
-    @ApplicationContext val context: Context
+    private val locationManager: LocationManager,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
+    val SATELLITE_MAP_STYLE = "satelliteMapStyle.json"
+    val STANDARD_MAP_STYLE = "standardMapStyle.json"
+
+    // Coordenadas de la UPV
     val UPV_POSITION = LatLng(39.4818, -0.3432)
 
     private val _userData = MutableStateFlow(firebaseAuth.currentUser)
@@ -36,50 +46,60 @@ class DestinationMapViewModel @Inject constructor(
 
     private val _markers = MutableStateFlow(
         listOf(
-            LatLng(39.482591772922085, -0.3462456083400781)
+            LatLng(39.482591772922085, -0.3462456083400781) // Ejemplo de marcador
         )
     )
     val markers: StateFlow<List<LatLng>> = _markers.asStateFlow()
 
     private val _mapStyle =
-        MutableStateFlow(loadJsonFromFile(context, "standardMapStyle.json"))
+        MutableStateFlow(loadJsonFromFile(context, STANDARD_MAP_STYLE))
     val mapStyle: StateFlow<String> = _mapStyle.asStateFlow()
 
+    private val _myPosition =
+        MutableStateFlow(getLastKnownLocation())
+    val myPosition: StateFlow<Location?> = _myPosition.asStateFlow()
 
-    fun logout() = viewModelScope.launch {
-        try {
-            firebaseAuth.signOut()
+    private val isFabMenuOpen = MutableStateFlow(false)
+    val isFabMenuOpenState: StateFlow<Boolean> = isFabMenuOpen.asStateFlow()
+
+    // Toggle para cambiar el estado de visibilidad del menú FAB
+    fun toggleFabMenu() {
+        isFabMenuOpen.value = !isFabMenuOpen.value
+    }
+
+    // Navega a la pantalla de autenticación
+    fun navigateToAuth() {
+        viewModelScope.launch {
             _navigationEvent.emit(NavigationEvent.NavigateToAuth)
-        } catch (e: Exception) {
-            _errorMessage.value = "Error al cerrar sesión: ${e.message}"
         }
     }
 
-    fun addMarker(position: LatLng) {
-        _markers.value += position
+    // Recupera la última ubicación conocida
+    private fun getLastKnownLocation(): Location? {
+        return if (ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+        } else {
+            null
+        }
     }
 
-    fun removeMarker(position: LatLng) {
-        _markers.value = _markers.value.filter { it != position }
+    // Carga el archivo JSON de un mapa desde los recursos
+    private fun loadJsonFromFile(context: Context, fileName: String): String {
+        return context.assets.open(fileName).bufferedReader().use { it.readText() }
     }
 
-    fun getUserEmail(): String = _userData.value?.email ?: "No hay usuario registrado"
-    fun getUserDisplayName(): String = _userData.value?.displayName ?: "No hay usuario registrado"
-    fun getUserId(): String = _userData.value?.uid ?: "No hay usuario registrado"
+    fun changeMapStyle(mapStyle: String) {
+        if (_mapStyle.value != mapStyle) {
+            _mapStyle.value = loadJsonFromFile(context, mapStyle)
+        }
+    }
 
+    // Manejo de eventos de navegación
     sealed class NavigationEvent {
-        data object NavigateToAuth : NavigationEvent()
-    }
-
-    /**
-     * Loads the map style JSON from the assets folder.
-     * The file is located at assets/satelliteMapStyle.json
-     */
-    private fun loadJsonFromFile(context: Context, filePath: String): String {
-        return try {
-            context.assets.open(filePath).bufferedReader().use { it.readText() }
-        } catch (e: Exception) {
-            "{}"
-        }
+        object NavigateToAuth : NavigationEvent()
     }
 }
