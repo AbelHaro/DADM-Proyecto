@@ -32,5 +32,8 @@
     <string name="register_error_unknown">Unknown error on register</string>
     <string name="register_success">User registered, confirm your email</string>
     <string name="login_error_unknown">Unknown error in login</string>
-    <string name="login_error_email_not_verified">>Email not verified</string>
+    <string name="login_error_email_not_verified">Email not verified</string>
+    <string name="location_permission_title"> Location Permission Required</string>
+    <string name="location_permission_message">Location permission is required to access your location. Please enable it in the app settings.</string>
+    <string name="go_to_settings">Go to Settings</string>
 </resources>

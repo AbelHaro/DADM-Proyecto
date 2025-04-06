@@ -14,29 +14,31 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- FAB Opción 2 (Centrar ubicación) - Inicialmente invisible -->
+    <!-- FAB for Standard Map Style - Initially invisible -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabStyleStandard"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="16dp"
-        android:contentDescription="Estilo 1"
+        android:contentDescription="Change style to Standard"
         android:visibility="invisible"
         app:layout_constraintBottom_toTopOf="@id/fabStyleSatellite"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:srcCompat="@drawable/standard_style_icon" />
 
-    <!-- FAB Opción 1 (Cambiar estilo) - Inicialmente invisible -->
+    <!-- FAB for Satellite Map Style - Initially invisible -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabStyleSatellite"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="16dp"
-        android:contentDescription="Estilo 2"
+        android:contentDescription="Change style to Satellite"
         android:visibility="invisible"
         app:layout_constraintBottom_toTopOf="@id/fabMain"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:srcCompat="@drawable/satellite_style_icon" />
 
     <!-- FAB Principal -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton

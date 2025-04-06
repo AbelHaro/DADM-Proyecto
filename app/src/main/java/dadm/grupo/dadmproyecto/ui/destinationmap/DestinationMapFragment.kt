@@ -1,7 +1,6 @@
 package dadm.grupo.dadmproyecto.ui.destinationmap
 
 import android.annotation.SuppressLint
-import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -13,7 +12,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import dadm.grupo.dadmproyecto.databinding.FragmentDestinationMapBinding
-import dadm.grupo.dadmproyecto.ui.AuthActivity
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import org.maplibre.android.MapLibre
@@ -35,14 +33,13 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
     private val viewModel: DestinationMapViewModel by viewModels()
     private var mapLibreMap: MapLibreMap? = null
 
-    // Inicialización del fragmento
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         // Inicializa MapLibre con la configuración predeterminada
         MapLibre.getInstance(requireContext(), null, WellKnownTileServer.MapLibre)
     }
 
-    // Se infla la vista del fragmento
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
@@ -50,12 +47,11 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
         return binding.root
     }
 
-    // Se configura el mapa una vez que la vista ha sido creada
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding.mapView.onCreate(savedInstanceState)
-        binding.mapView.getMapAsync(this) // Llama a onMapReady cuando el mapa está listo
-        observeNavigationEvents() // Observa eventos de navegación
+        binding.mapView.getMapAsync(this)
+        observeNavigationEvents()
     }
 
     // Callback cuando el mapa está listo
@@ -66,29 +62,31 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
             Style.Builder().fromJson(viewModel.mapStyle.value) // Establece el estilo del mapa
         ) { style ->
 
-            // Configura el LocationComponent para rastrear la ubicación
             val locationComponent = mapLibreMap.locationComponent
-            val locationComponentOptions = LocationComponentOptions.builder(requireContext())
-                .pulseEnabled(true) // Habilita el pulso (efecto visual)
-                .build()
 
-            // Crea las opciones para activar el LocationComponent
-            val locationComponentActivationOptions =
-                buildLocationComponentActivationOptions(style, locationComponentOptions)
+            if (viewModel.isLocationPermissionGranted.value) {
+                val locationComponentOptions = LocationComponentOptions.builder(requireContext())
+                    .pulseEnabled(true)
+                    .build()
 
-            // Activa el LocationComponent y habilita el seguimiento de la ubicación
-            locationComponent.activateLocationComponent(locationComponentActivationOptions)
-            locationComponent.isLocationComponentEnabled = true
-            locationComponent.cameraMode = CameraMode.TRACKING
+                val locationComponentActivationOptions =
+                    buildLocationComponentActivationOptions(style, locationComponentOptions)
 
-            // Añade los marcadores al mapa
+                locationComponent.activateLocationComponent(locationComponentActivationOptions)
+                locationComponent.isLocationComponentEnabled = true
+                locationComponent.cameraMode = CameraMode.TRACKING
+            } else {
+                Log.d("DestinationMapFragment", "Location permissions not granted")
+            }
+
+            // Agrega un marcador en la posición de la UPV
             viewModel.markers.value.forEach { latLng ->
                 val markerOptions = MarkerOptions()
                     .snippet("Marker")
                     .position(latLng)
                     .title("Marker")
                 Log.d("DestinationMapFragment", "Adding marker at: $latLng")
-                mapLibreMap.addMarker(markerOptions) // Agrega el marcador
+                mapLibreMap.addMarker(markerOptions)
             }
         }
 
@@ -96,29 +94,29 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
         mapLibreMap.cameraPosition = org.maplibre.android.camera.CameraPosition.Builder()
             .target(
                 org.maplibre.android.geometry.LatLng(
-                    viewModel.UPV_POSITION.latitude,
-                    viewModel.UPV_POSITION.longitude
+                    viewModel.upvPosition.latitude,
+                    viewModel.upvPosition.longitude
                 )
             )
-            .zoom(15.0) // Establece el nivel de zoom
-            .bearing(20.7) // Dirección de la cámara
-            .tilt(20.0) // Inclinación de la cámara
+            .zoom(MAP_ZOOM_LEVEL) // Establece el nivel de zoom
+            .bearing(MAP_BEARING_ANGLE) // Dirección de la cámara
+            .tilt(MAP_TILT_ANGLE) // Inclinación de la cámara
             .build()
 
         // Establece los límites de zoom y el área visible
-        mapLibreMap.setMinZoomPreference(15.0)
-        mapLibreMap.setMaxZoomPreference(20.0)
+        mapLibreMap.setMinZoomPreference(MAP_MIN_ZOOM)
+        mapLibreMap.setMaxZoomPreference(MAP_MAX_ZOOM)
         val boundsBuilder = org.maplibre.android.geometry.LatLngBounds.Builder()
             .include(
                 org.maplibre.android.geometry.LatLng(
-                    viewModel.UPV_POSITION.latitude + 0.02,
-                    viewModel.UPV_POSITION.longitude + 0.02
+                    viewModel.upvPosition.latitude + MAP_LATITUDE_OFFSET,
+                    viewModel.upvPosition.longitude + MAP_LONGITUDE_OFFSET
                 )
             )
             .include(
                 org.maplibre.android.geometry.LatLng(
-                    viewModel.UPV_POSITION.latitude - 0.02,
-                    viewModel.UPV_POSITION.longitude - 0.02
+                    viewModel.upvPosition.latitude - MAP_LATITUDE_OFFSET,
+                    viewModel.upvPosition.longitude - MAP_LONGITUDE_OFFSET
                 )
             )
         mapLibreMap.setLatLngBoundsForCameraTarget(boundsBuilder.build()) // Define los límites del mapa
@@ -144,20 +142,19 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
 
     // Observa los eventos de navegación desde el ViewModel
     private fun observeNavigationEvents() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.navigationEvent.collect { event ->
-                    when (event) {
-                        is DestinationMapViewModel.NavigationEvent.NavigateToAuth -> navigateToAuth() // Maneja la navegación
-                    }
-                }
-            }
-        }
+//        viewLifecycleOwner.lifecycleScope.launch {
+//            repeatOnLifecycle(Lifecycle.State.STARTED) {
+//                viewModel.navigationEvent.collect { event ->
+//                    when (event) {
+//                        is DestinationMapViewModel.NavigationEvent.NavigateToAuth -> navigateToAuth()
+//                    }
+//                }
+//            }
+//        }
 
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.isFabMenuOpenState.collect { isMenuOpen ->
-                    // Cambia la visibilidad de los botones de estilo dependiendo de isFabMenuOpen
                     binding.fabStyleStandard.visibility =
                         if (isMenuOpen) View.VISIBLE else View.INVISIBLE
                     binding.fabStyleSatellite.visibility =
@@ -172,44 +169,66 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
                 viewModel.mapStyle.collect { style ->
                     mapLibreMap?.setStyle(
                         Style.Builder().fromJson(style)
-                    ) // Cambia el estilo del mapa
+                    )
+                }
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.isLocationPermissionGranted.collect { isGranted ->
+                    if (isGranted) {
+                        binding.mapView.getMapAsync { map ->
+                            val locationComponent = map.locationComponent
+                            val locationComponentOptions =
+                                LocationComponentOptions.builder(requireContext())
+                                    .pulseEnabled(true)
+                                    .build()
+
+                            val locationComponentActivationOptions =
+                                buildLocationComponentActivationOptions(
+                                    map.style!!,
+                                    locationComponentOptions
+                                )
+
+                            locationComponent.activateLocationComponent(
+                                locationComponentActivationOptions
+                            )
+                            locationComponent.isLocationComponentEnabled = true
+                        }
+                    } else {
+                        Log.d("DestinationMapFragment", "Location permissions not granted")
+                    }
+
                 }
             }
         }
 
 
-        // Manejo de los clics en los FABs
         binding.fabMain.setOnClickListener {
-            // Al presionar el FAB principal, cambia el estado de visibilidad del menú
             viewModel.toggleFabMenu()
         }
 
         binding.fabStyleStandard.setOnClickListener {
-            // Cambia el estilo del mapa a estándar
-            Log.d("DestinationMapFragment", "Standard style selected")
-            viewModel.changeMapStyle(viewModel.STANDARD_MAP_STYLE) // Cambia el estilo del mapa
+            viewModel.changeMapStyle(STANDARD_MAP_STYLE)
             viewModel.toggleFabMenu()
         }
 
         binding.fabStyleSatellite.setOnClickListener {
-            // Cambia el estilo del mapa a satélite
-            Log.d("DestinationMapFragment", "Satellite style selected")
-            viewModel.changeMapStyle(viewModel.SATELLITE_MAP_STYLE) // Cambia el estilo del mapa
-            viewModel.toggleFabMenu() // Cierra el menú después de seleccionar el estilo
+            viewModel.changeMapStyle(SATELLITE_MAP_STYLE)
+            viewModel.toggleFabMenu()
         }
     }
 
-    // Función para navegar a la actividad de autenticación
-    private fun navigateToAuth() {
-        Intent(requireActivity(), AuthActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        }.also { intent ->
-            startActivity(intent)
-            requireActivity().finish() // Cierra la actividad actual
-        }
-    }
+//    private fun navigateToAuth() {
+//        Intent(requireActivity(), AuthActivity::class.java).apply {
+//            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+//        }.also { intent ->
+//            startActivity(intent)
+//            requireActivity().finish()
+//        }
+//    }
 
-    // Métodos del ciclo de vida del MapView
     override fun onStart() {
         super.onStart()
         binding.mapView.onStart()
@@ -218,6 +237,22 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
     override fun onResume() {
         super.onResume()
         binding.mapView.onResume()
+
+        if (viewModel.isLocationPermissionGranted.value) {
+            binding.mapView.getMapAsync @androidx.annotation.RequiresPermission(allOf = [android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION]) { map ->
+                val locationComponent = map.locationComponent
+                val locationComponentOptions = LocationComponentOptions.builder(requireContext())
+                    .pulseEnabled(true)
+                    .build()
+
+                val locationComponentActivationOptions =
+                    buildLocationComponentActivationOptions(map.style!!, locationComponentOptions)
+
+                locationComponent.activateLocationComponent(locationComponentActivationOptions)
+                locationComponent.isLocationComponentEnabled = true
+                //locationComponent.cameraMode = CameraMode.TRACKING
+            }
+        }
     }
 
     override fun onPause() {
@@ -242,8 +277,8 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        binding.mapView.onDestroy() // Limpia los recursos del MapView
+        binding.mapView.onDestroy()
         _binding = null
-        mapLibreMap = null // Elimina la referencia al mapa
+        mapLibreMap = null
     }
 }

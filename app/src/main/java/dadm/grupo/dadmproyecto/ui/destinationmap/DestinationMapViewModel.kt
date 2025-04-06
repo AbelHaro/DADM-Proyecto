@@ -29,11 +29,8 @@ class DestinationMapViewModel @Inject constructor(
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
-    val SATELLITE_MAP_STYLE = "satelliteMapStyle.json"
-    val STANDARD_MAP_STYLE = "standardMapStyle.json"
-
     // Coordenadas de la UPV
-    val UPV_POSITION = LatLng(39.4818, -0.3432)
+    val upvPosition = LatLng(UPV_POSITION_LATITUDE, UPV_POSITION_LONGITUDE)
 
     private val _userData = MutableStateFlow(firebaseAuth.currentUser)
     val userData: StateFlow<FirebaseUser?> = _userData.asStateFlow()
@@ -61,6 +58,17 @@ class DestinationMapViewModel @Inject constructor(
 
     private val isFabMenuOpen = MutableStateFlow(false)
     val isFabMenuOpenState: StateFlow<Boolean> = isFabMenuOpen.asStateFlow()
+
+    private var _isLocationPermissionGranted =
+        MutableStateFlow(
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        )
+    val isLocationPermissionGranted: StateFlow<Boolean> =
+        _isLocationPermissionGranted.asStateFlow()
+
 
     // Toggle para cambiar el estado de visibilidad del menú FAB
     fun toggleFabMenu() {
@@ -96,6 +104,15 @@ class DestinationMapViewModel @Inject constructor(
         if (_mapStyle.value != mapStyle) {
             _mapStyle.value = loadJsonFromFile(context, mapStyle)
         }
+    }
+
+    fun checkLocationPermission() {
+        _isLocationPermissionGranted = MutableStateFlow(
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        )
     }
 
     // Manejo de eventos de navegación

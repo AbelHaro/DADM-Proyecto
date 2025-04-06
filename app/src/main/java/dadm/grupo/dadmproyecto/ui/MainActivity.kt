@@ -20,7 +20,6 @@ import dadm.grupo.dadmproyecto.R
 import dadm.grupo.dadmproyecto.databinding.ActivityMainBinding
 import dagger.hilt.android.AndroidEntryPoint
 
-
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
@@ -50,41 +49,31 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
-        checkAndRequestLocationPermission()
+        if (!hasLocationPermission()) {
+            requestLocationPermission()
+        }
     }
 
     override fun onSupportNavigateUp(): Boolean {
         return navController.navigateUp() || super.onSupportNavigateUp()
     }
 
-    override fun onBackPressed() {
-        super.onBackPressed()
-        if (navController.currentDestination?.id == R.id.fDestinationMapFragment) {
-            showExitConfirmationDialog()
-        } else {
-            onBackPressedDispatcher.onBackPressed() // Uso correcto en nuevas versiones de Android
-        }
+    private fun hasLocationPermission(): Boolean {
+        return ActivityCompat.checkSelfPermission(
+            this, Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
     }
 
-    private fun checkAndRequestLocationPermission() {
-        if (ActivityCompat.checkSelfPermission(
-                this, Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-        }
+    private fun requestLocationPermission() {
+        requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
     }
 
     private fun showExitConfirmationDialog() {
         AlertDialog.Builder(this)
             .setTitle(R.string.exit_dialog_title)
             .setMessage(R.string.exit_dialog_message)
-            .setPositiveButton(R.string.exit_dialog_positive) { _, _ ->
-                finishAffinity()
-            }
-            .setNegativeButton(R.string.exit_dialog_negative) { dialog, _ ->
-                dialog.dismiss()
-            }
+            .setPositiveButton(R.string.exit_dialog_positive) { _, _ -> finishAffinity() }
+            .setNegativeButton(R.string.exit_dialog_negative) { dialog, _ -> dialog.dismiss() }
             .setCancelable(true)
             .create()
             .show()
@@ -92,18 +81,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun showPermissionDeniedDialog() {
         AlertDialog.Builder(this)
-            .setTitle("Permiso de Ubicación Necesario")
-            .setMessage(
-                "Esta aplicación necesita acceso a tu ubicación para funcionar correctamente. " +
-                        "Por favor, concede el permiso en los ajustes de la aplicación."
-            )
-            .setPositiveButton("Ir a Ajustes") { _, _ ->
-                openAppSettings()
-            }
-            .setNegativeButton("Cancelar") { dialog, _ ->
-                dialog.dismiss()
-            }
-            .setCancelable(false) // Evita que el usuario lo cierre sin elegir una opción
+            .setTitle(R.string.location_permission_title)
+            .setMessage(R.string.location_permission_message)
+            .setPositiveButton(R.string.go_to_settings) { _, _ -> openAppSettings() }
+            .setCancelable(false)
             .create()
             .show()
     }
@@ -114,6 +95,4 @@ class MainActivity : AppCompatActivity() {
         }
         startActivity(intent)
     }
-
-
 }
