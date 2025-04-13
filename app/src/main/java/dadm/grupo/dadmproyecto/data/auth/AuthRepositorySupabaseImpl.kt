@@ -43,4 +43,9 @@ class AuthRepositorySupabaseImpl @Inject constructor(
             Result.failure(e)
         }
     }
+
+    override fun isUserLoggedIn(): Boolean {
+        return auth.currentSessionOrNull() != null
+    }
+
 }

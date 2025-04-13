@@ -1,3 +1,18 @@
+import java.io.FileInputStream
+import java.util.Properties
+
+
+val localProps = Properties()
+val localPropsFile = File(rootDir, "local.properties")
+if (localPropsFile.exists()) {
+    localProps.load(FileInputStream(localPropsFile))
+    println("✔️ Loaded local.properties")
+} else {
+    println("⚠️ local.properties file not found")
+}
+
+
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -22,13 +37,17 @@ android {
         buildConfigField(
             "String",
             "SUPABASE_URL",
-            "\"${project.findProperty("SUPABASE_URL") ?: "default_url"}\""
+            "\"${localProps.getProperty("SUPABASE_URL", "default_url")}\""
         )
         buildConfigField(
             "String",
             "SUPABASE_KEY",
-            "\"${project.findProperty("SUPABASE_KEY") ?: "default_key"}\""
+            "\"${localProps.getProperty("SUPABASE_KEY", "default_key")}\""
         )
+
+        println("👉 SUPABASE_URL = ${localProps.getProperty("SUPABASE_URL")}")
+        println("👉 SUPABASE_KEY = ${localProps.getProperty("SUPABASE_KEY")}")
+
     }
 
     buildTypes {
