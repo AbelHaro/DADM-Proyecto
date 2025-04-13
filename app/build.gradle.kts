@@ -18,6 +18,17 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField(
+            "String",
+            "SUPABASE_URL",
+            "\"${project.findProperty("SUPABASE_URL") ?: "default_url"}\""
+        )
+        buildConfigField(
+            "String",
+            "SUPABASE_KEY",
+            "\"${project.findProperty("SUPABASE_KEY") ?: "default_key"}\""
+        )
     }
 
     buildTypes {
@@ -29,20 +40,23 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
     kotlinOptions {
         jvmTarget = "11"
     }
+
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
@@ -77,15 +91,12 @@ dependencies {
     ksp(libs.androidx.roomcompiler)
 
     implementation(platform(libs.firebase.bom))
-    // When using the BoM, you don't specify versions in Firebase library dependencies
     implementation(libs.google.firebase.auth)
 
-    // Also add the dependency for the Google Play services library and specify its version
     implementation(libs.play.services.auth)
 
     implementation(libs.android.sdk)
     implementation(libs.android.plugin.annotation.v9)
-
 
     // Cliente Supabase para Kotlin
     implementation(libs.postgrest.kt)
@@ -100,5 +111,4 @@ dependencies {
     implementation(libs.ktor.client.android)
     implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.serialization.kotlinx.json)
-
 }
