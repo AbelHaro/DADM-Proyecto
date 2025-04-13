@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -13,15 +14,22 @@ import androidx.core.app.ActivityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import dadm.grupo.dadmproyecto.R
+import dadm.grupo.dadmproyecto.data.auth.AuthRepository
 import dadm.grupo.dadmproyecto.databinding.ActivityMainBinding
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
+
+    @Inject
+    lateinit var authRepository: AuthRepository
 
     private lateinit var navController: NavController
     private lateinit var binding: ActivityMainBinding
@@ -52,6 +60,22 @@ class MainActivity : AppCompatActivity() {
         if (!hasLocationPermission()) {
             requestLocationPermission()
         }
+
+        lifecycleScope.launch {
+            try {
+                val user = authRepository.getCurrentUser()
+                if (user != null) {
+                    Log.d("MainActivity", "User is logged in: ${user.email}")
+
+                } else {
+                    // User is not logged in, show login screen
+                    Log.d("MainActivity", "User is not logged in")
+                }
+            } catch (e: Exception) {
+                Log.w("MainActivity", "Error getting user: ${e.message}")
+            }
+        }
+
     }
 
     override fun onSupportNavigateUp(): Boolean {

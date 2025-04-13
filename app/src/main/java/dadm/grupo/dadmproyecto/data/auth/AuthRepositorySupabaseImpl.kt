@@ -3,6 +3,7 @@ package dadm.grupo.dadmproyecto.data.auth
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.builtin.Email
+import io.github.jan.supabase.gotrue.user.UserInfo
 import javax.inject.Inject
 
 class AuthRepositorySupabaseImpl @Inject constructor(
@@ -44,8 +45,11 @@ class AuthRepositorySupabaseImpl @Inject constructor(
         }
     }
 
-    override fun isUserLoggedIn(): Boolean {
-        return auth.currentSessionOrNull() != null
+    override suspend fun isUserLoggedIn(): Boolean {
+        return auth.loadFromStorage(autoRefresh = true)
     }
 
+    override suspend fun getCurrentUser(): UserInfo? {
+        return auth.currentUserOrNull()
+    }
 }

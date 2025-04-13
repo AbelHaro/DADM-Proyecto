@@ -11,6 +11,7 @@ import dadm.grupo.dadmproyecto.R
 import dadm.grupo.dadmproyecto.data.auth.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.jan.supabase.SupabaseClient
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -20,6 +21,9 @@ class RegisterViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
+
+    @Inject
+    lateinit var supabaseClient: SupabaseClient
 
     fun registerUser(email: String, password: String, onResult: (Boolean, String?) -> Unit) {
         when {
@@ -46,6 +50,7 @@ class RegisterViewModel @Inject constructor(
                 Log.d("RegisterViewModel", "Result: $result")
 
                 if (result.isSuccess) {
+
                     onResult(true, context.getString(R.string.register_success))
                 } else {
                     onResult(false, context.getString(R.string.register_error_unknown))

@@ -30,16 +30,15 @@ class AuthActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Lanzar una corrutina para el login
+        // Lanzar una corrutina para saber si el usuario está logueado de una sesión anterior
         lifecycleScope.launch {
             try {
-//                authRepository.signInWithEmail("test@gmail.com", "test123")
-//                Log.d("AuthActivity", "User signed in successfully")
 
                 if (authRepository.isUserLoggedIn()) {
                     redirectToMain()
                     return@launch
                 }
+
             } catch (e: Exception) {
                 Log.e("AuthActivity", "Error signing in user: ${e.message}")
             }

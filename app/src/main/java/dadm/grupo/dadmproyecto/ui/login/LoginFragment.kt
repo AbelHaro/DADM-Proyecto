@@ -89,10 +89,10 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
     }
 
     private fun navigateToMainActivityLogged() {
-        val email = "test@test.com"
-        val password = "Test1234"
+        val email = "test@gmail.com"
+        val password = "test123"
 
-        viewModel.loginUserTestNoEmailVerifed(email, password) { success, errorMessage ->
+        viewModel.loginUser(email, password) { success, errorMessage ->
             if (success) {
                 navigateToMainActivity()
             } else {

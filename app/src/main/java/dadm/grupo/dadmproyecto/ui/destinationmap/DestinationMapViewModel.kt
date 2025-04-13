@@ -8,8 +8,7 @@ import android.location.LocationManager
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseUser
+import dadm.grupo.dadmproyecto.data.auth.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -24,16 +23,13 @@ import javax.inject.Inject
 
 @HiltViewModel
 class DestinationMapViewModel @Inject constructor(
-    private val firebaseAuth: FirebaseAuth,
+    private val authRepository: AuthRepository,
     private val locationManager: LocationManager,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     // Coordenadas de la UPV
     val upvPosition = LatLng(UPV_POSITION_LATITUDE, UPV_POSITION_LONGITUDE)
-
-    private val _userData = MutableStateFlow(firebaseAuth.currentUser)
-    val userData: StateFlow<FirebaseUser?> = _userData.asStateFlow()
 
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()

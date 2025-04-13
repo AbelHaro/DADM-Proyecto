@@ -1,7 +1,6 @@
 import java.io.FileInputStream
 import java.util.Properties
 
-
 val localProps = Properties()
 val localPropsFile = File(rootDir, "local.properties")
 if (localPropsFile.exists()) {
@@ -11,14 +10,13 @@ if (localPropsFile.exists()) {
     println("⚠️ local.properties file not found")
 }
 
-
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.hilt)
     alias(libs.plugins.devtools)
     alias(libs.plugins.google.gms.google.services)
+    id("org.jetbrains.kotlin.plugin.serialization")
 }
 
 android {
@@ -47,7 +45,6 @@ android {
 
         println("👉 SUPABASE_URL = ${localProps.getProperty("SUPABASE_URL")}")
         println("👉 SUPABASE_KEY = ${localProps.getProperty("SUPABASE_KEY")}")
-
     }
 
     buildTypes {
@@ -124,7 +121,7 @@ dependencies {
     implementation(libs.gotrue.kt)
 
     // Serialización (necesario para algunos módulos)
-    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.kotlinx.serialization.json)  // Asegúrate de tener esta dependencia
 
     // HTTP client (Ktor)
     implementation(libs.ktor.client.android)
