@@ -5,4 +5,5 @@ plugins {
     alias(libs.plugins.hilt) apply false
     alias(libs.plugins.devtools) apply false
     alias(libs.plugins.google.gms.google.services) apply false
+    id("org.jetbrains.kotlin.plugin.serialization") version "1.9.20"
 }

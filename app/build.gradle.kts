@@ -86,4 +86,19 @@ dependencies {
     implementation(libs.android.sdk)
     implementation(libs.android.plugin.annotation.v9)
 
+
+    // Cliente Supabase para Kotlin
+    implementation(libs.postgrest.kt)
+    implementation(libs.realtime.kt)
+    implementation(libs.storage.kt)
+    implementation(libs.gotrue.kt)
+
+    // Serialización (necesario para algunos módulos)
+    implementation(libs.kotlinx.serialization.json)
+
+    // HTTP client (Ktor)
+    implementation(libs.ktor.client.android)
+    implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.serialization.kotlinx.json)
+
 }
