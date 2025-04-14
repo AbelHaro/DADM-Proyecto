@@ -183,7 +183,7 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.isLocationPermissionGranted.collect { isGranted ->
                     if (isGranted) {
-                        binding.mapView.getMapAsync { map ->
+                        binding.mapView.getMapAsync @androidx.annotation.RequiresPermission(allOf = [android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION]) { map ->
                             val locationComponent = map.locationComponent
                             val locationComponentOptions =
                                 LocationComponentOptions.builder(requireContext())

@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dadm.grupo.dadmproyecto.R
 import dadm.grupo.dadmproyecto.data.auth.AuthRepository
+import dadm.grupo.dadmproyecto.data.db.UsersRepository
 import dadm.grupo.dadmproyecto.domain.model.User
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -17,6 +18,7 @@ import javax.inject.Inject
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val authRepository: AuthRepository,
+    private val usersRepository: UsersRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -38,6 +40,17 @@ class LoginViewModel @Inject constructor(
                         if (user != null) {
                             Log.d("LoginViewModel", "User: $user")
                             val userId = user.id
+
+                            val userExists = usersRepository.getMyUserData()
+
+
+                            // Si el usuario ya existe, no lo creamos de nuevo, solo se crea la primera vez que inicia sesión
+                            if (userExists != null) {
+                                Log.d("LoginViewModel", "User already exists: $userExists")
+                                onResult(true, null)
+                                return@onSuccess
+                            }
+
 
                             val userData = User(
                                 userId = userId,
