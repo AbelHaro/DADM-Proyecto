@@ -80,11 +80,16 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
             }
 
             // Agrega un marcador en la posición de la UPV
-            viewModel.markers.value.forEach { latLng ->
+            viewModel.markers.value.forEach { marker ->
+                val latLng = org.maplibre.android.geometry.LatLng(
+                    marker.latitude,
+                    marker.longitude
+                )
+
                 val markerOptions = MarkerOptions()
                     .snippet("Marker")
                     .position(latLng)
-                    .title("Marker")
+                    .title(marker.name)
                 Log.d("DestinationMapFragment", "Adding marker at: $latLng")
                 mapLibreMap.addMarker(markerOptions)
             }
@@ -200,6 +205,27 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
                         Log.d("DestinationMapFragment", "Location permissions not granted")
                     }
 
+                }
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.markers.collect { markers ->
+                    mapLibreMap?.removeAnnotations()
+                    markers.forEach { marker ->
+                        val latLng = org.maplibre.android.geometry.LatLng(
+                            marker.latitude,
+                            marker.longitude
+                        )
+
+                        val markerOptions = MarkerOptions()
+                            .snippet("Marker")
+                            .position(latLng)
+                            .title(marker.name)
+                        Log.d("DestinationMapFragment", "Adding marker at: $latLng")
+                        mapLibreMap?.addMarker(markerOptions)
+                    }
                 }
             }
         }

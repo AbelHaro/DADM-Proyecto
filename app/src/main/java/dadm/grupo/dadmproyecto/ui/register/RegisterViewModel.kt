@@ -9,9 +9,11 @@ import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.FirebaseAuth
 import dadm.grupo.dadmproyecto.R
 import dadm.grupo.dadmproyecto.data.auth.AuthRepository
+import dadm.grupo.dadmproyecto.domain.model.User
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -51,6 +53,24 @@ class RegisterViewModel @Inject constructor(
 
                 if (result.isSuccess) {
 
+                    val user = authRepository.getCurrentUser()
+
+                    if (user != null) {
+                        Log.d("RegisterViewModel", "User: $user")
+                        val userId = user.id
+
+                        val userData = User(
+                            userId = userId,
+                            displayName = email,
+                            bio = "",
+                            createdAt = System.currentTimeMillis().toString(),
+                            updatedAt = System.currentTimeMillis().toString()
+                        )
+
+                        supabaseClient.from("users").insert(userData)
+                    } else {
+                        Log.e("RegisterViewModel", "User is null after registration")
+                    }
                     onResult(true, context.getString(R.string.register_success))
                 } else {
                     onResult(false, context.getString(R.string.register_error_unknown))
