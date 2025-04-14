@@ -86,6 +86,7 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
 
     private fun navigateToMainActivity() {
         startActivity(Intent(requireActivity(), MainActivity::class.java))
+        requireActivity().finish()
     }
 
     private fun navigateToMainActivityLogged() {

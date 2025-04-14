@@ -11,6 +11,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import dadm.grupo.dadmproyecto.databinding.FragmentDestinationMapBinding
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -230,6 +231,45 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
             }
         }
 
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.isFabMenuOpenState.collect { isMenuOpen ->
+                    animateMenuOpen(isMenuOpen)
+                }
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.isLocationPermissionGranted.collect { isGranted ->
+                    if (isGranted) {
+                        Log.d("DestinationMapFragment", "Location permissions granted")
+                        binding.mapView.getMapAsync @androidx.annotation.RequiresPermission(allOf = [android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION]) { map ->
+                            val locationComponent = map.locationComponent
+                            val locationComponentOptions =
+                                LocationComponentOptions.builder(requireContext())
+                                    .pulseEnabled(true)
+                                    .build()
+
+                            val locationComponentActivationOptions =
+                                buildLocationComponentActivationOptions(
+                                    map.style!!,
+                                    locationComponentOptions
+                                )
+
+                            locationComponent.activateLocationComponent(
+                                locationComponentActivationOptions
+                            )
+                            locationComponent.isLocationComponentEnabled = true
+                        }
+                    } else {
+                        Log.d("DestinationMapFragment", "Location permissions not granted")
+                    }
+                }
+            }
+        }
+
+        setupFabAnimations()
 
         binding.fabMain.setOnClickListener {
             viewModel.toggleFabMenu()
@@ -263,6 +303,8 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
     override fun onResume() {
         super.onResume()
         binding.mapView.onResume()
+
+        viewModel.checkLocationPermission()
 
         if (viewModel.isLocationPermissionGranted.value) {
             binding.mapView.getMapAsync @androidx.annotation.RequiresPermission(allOf = [android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION]) { map ->
@@ -306,5 +348,93 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
         binding.mapView.onDestroy()
         _binding = null
         mapLibreMap = null
+    }
+
+
+    // In DestinationMapFragment.kt
+
+    private fun setupFabAnimations() {
+        // Setup click listeners with animations
+        binding.fabMain.setOnClickListener {
+            // Animate the main FAB rotation
+            val rotationAngle = if (viewModel.isFabMenuOpenState.value) 0f else 45f
+            binding.fabMain.animate()
+                .rotation(rotationAngle)
+                .setDuration(300)
+                .start()
+
+            viewModel.toggleFabMenu()
+        }
+
+        // Secondary FABs with animations
+        binding.fabStyleStandard.setOnClickListener {
+            animateFabClick(binding.fabStyleStandard)
+            viewModel.changeMapStyle(STANDARD_MAP_STYLE)
+            viewModel.toggleFabMenu()
+        }
+
+        binding.fabStyleSatellite.setOnClickListener {
+            animateFabClick(binding.fabStyleSatellite)
+            viewModel.changeMapStyle(SATELLITE_MAP_STYLE)
+            viewModel.toggleFabMenu()
+        }
+    }
+
+    private fun animateMenuOpen(isOpen: Boolean) {
+        if (isOpen) {
+            binding.fabStyleStandard.show()
+            binding.fabStyleSatellite.show()
+
+            binding.fabStyleStandard.alpha = 0f
+            binding.fabStyleSatellite.alpha = 0f
+
+            binding.fabStyleStandard.translationY = 100f
+            binding.fabStyleSatellite.translationY = 100f
+
+            binding.fabStyleStandard.animate()
+                .alpha(1f)
+                .translationY(0f)
+                .setDuration(300)
+                .start()
+
+            binding.fabStyleSatellite.animate()
+                .alpha(1f)
+                .translationY(0f)
+                .setDuration(300)
+                .setStartDelay(50)
+                .start()
+        } else {
+            binding.fabStyleStandard.animate()
+                .alpha(0f)
+                .translationY(100f)
+                .setDuration(300)
+                .start()
+
+            binding.fabStyleSatellite.animate()
+                .alpha(0f)
+                .translationY(100f)
+                .setDuration(300)
+                .setStartDelay(50)
+                .withEndAction {
+                    binding.fabStyleStandard.hide()
+                    binding.fabStyleSatellite.hide()
+                }
+                .start()
+        }
+    }
+
+    private fun animateFabClick(fab: FloatingActionButton) {
+        fab.animate()
+            .scaleX(1.2f)
+            .scaleY(1.2f)
+            .setDuration(100)
+            .withEndAction {
+                fab.animate()
+                    .scaleX(1.0f)
+                    .scaleY(1.0f)
+                    .setDuration(100)
+                    .start()
+            }
+            .start()
     }
 }

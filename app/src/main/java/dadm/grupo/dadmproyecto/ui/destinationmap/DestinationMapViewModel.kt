@@ -115,16 +115,26 @@ class DestinationMapViewModel @Inject constructor(
     }
 
     fun checkLocationPermission() {
-        _isLocationPermissionGranted = MutableStateFlow(
+        _isLocationPermissionGranted.value =
             ContextCompat.checkSelfPermission(
                 context,
                 Manifest.permission.ACCESS_FINE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED
-        )
+    }
+
+    fun updateCurrentLocation() {
+        if (ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            _myPosition.value = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+        }
     }
 
     // Manejo de eventos de navegación
     sealed class NavigationEvent {
         object NavigateToAuth : NavigationEvent()
     }
+
 }
