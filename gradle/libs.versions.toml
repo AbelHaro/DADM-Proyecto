@@ -4,12 +4,17 @@ androidPluginAnnotationV9 = "2.0.1"
 androidSdk = "11.5.1"
 datastorePreferences = "1.1.3"
 firebaseBom = "32.8.0"
+gotrueKt = "2.2.1"
 kotlin = "1.9.24"
 coreKtx = "1.15.0"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
 appcompat = "1.7.0"
+kotlinxSerializationJson = "1.6.3"
+ktorClientAndroid = "2.3.7"
+ktorClientContentNegotiation = "2.3.9"
+ktorSerializationKotlinxJson = "2.3.9"
 lifecycleViewmodelKtx = "2.8.7"
 material = "1.12.0"
 activity = "1.10.1"
@@ -19,9 +24,12 @@ hilt = "2.50"
 moshiKotlin = "1.14.0"
 navigationUiKtx = "2.8.8"
 playServicesAuth = "21.0.0"
+postgrestKt = "2.2.1"
 preferenceKtx = "1.2.1"
+realtimeKt = "2.2.1"
 retrofit = "2.9.0"
 roomcompiler = "2.6.1"
+storageKt = "2.2.1"
 swiperefreshlayout = "1.1.0"
 googleGmsGoogleServices = "4.4.2"
 firebaseAuth = "22.3.1"
@@ -46,10 +54,15 @@ androidx-swiperefreshlayout = { module = "androidx.swiperefreshlayout:swiperefre
 converter-moshi = { module = "com.squareup.retrofit2:converter-moshi", version.ref = "retrofit" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 google-firebase-auth = { module = "com.google.firebase:firebase-auth" }
+gotrue-kt = { module = "io.github.jan-tennert.supabase:gotrue-kt", version.ref = "gotrueKt" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
+ktor-client-android = { module = "io.ktor:ktor-client-android", version.ref = "ktorClientAndroid" }
+ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktorClientContentNegotiation" }
+ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktorSerializationKotlinxJson" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
@@ -58,12 +71,15 @@ hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.r
 moshi-kotlin = { module = "com.squareup.moshi:moshi-kotlin", version.ref = "moshiKotlin" }
 moshi-kotlin-codegen = { module = "com.squareup.moshi:moshi-kotlin-codegen", version.ref = "moshiKotlin" }
 play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
+postgrest-kt = { module = "io.github.jan-tennert.supabase:postgrest-kt", version.ref = "postgrestKt" }
+realtime-kt = { module = "io.github.jan-tennert.supabase:realtime-kt", version.ref = "realtimeKt" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
 firebase-auth = { group = "com.google.firebase", name = "firebase-auth", version.ref = "firebaseAuth" }
 androidx-credentials = { group = "androidx.credentials", name = "credentials", version.ref = "credentials" }
 androidx-credentials-play-services-auth = { group = "androidx.credentials", name = "credentials-play-services-auth", version.ref = "credentialsPlayServicesAuth" }
 googleid = { group = "com.google.android.libraries.identity.googleid", name = "googleid", version.ref = "googleid" }
 firebase-firestore-ktx = { group = "com.google.firebase", name = "firebase-firestore-ktx", version.ref = "firebaseFirestoreKtx" }
+storage-kt = { module = "io.github.jan-tennert.supabase:storage-kt", version.ref = "storageKt" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

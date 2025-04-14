@@ -1,9 +1,22 @@
+import java.io.FileInputStream
+import java.util.Properties
+
+val localProps = Properties()
+val localPropsFile = File(rootDir, "local.properties")
+if (localPropsFile.exists()) {
+    localProps.load(FileInputStream(localPropsFile))
+    println("✔️ Loaded local.properties")
+} else {
+    println("⚠️ local.properties file not found")
+}
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.hilt)
     alias(libs.plugins.devtools)
     alias(libs.plugins.google.gms.google.services)
+    id("org.jetbrains.kotlin.plugin.serialization")
 }
 
 android {
@@ -18,6 +31,20 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField(
+            "String",
+            "SUPABASE_URL",
+            "\"${localProps.getProperty("SUPABASE_URL", "default_url")}\""
+        )
+        buildConfigField(
+            "String",
+            "SUPABASE_KEY",
+            "\"${localProps.getProperty("SUPABASE_KEY", "default_key")}\""
+        )
+
+        println("👉 SUPABASE_URL = ${localProps.getProperty("SUPABASE_URL")}")
+        println("👉 SUPABASE_KEY = ${localProps.getProperty("SUPABASE_KEY")}")
     }
 
     buildTypes {
@@ -29,20 +56,23 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
     kotlinOptions {
         jvmTarget = "11"
     }
+
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
@@ -77,13 +107,24 @@ dependencies {
     ksp(libs.androidx.roomcompiler)
 
     implementation(platform(libs.firebase.bom))
-    // When using the BoM, you don't specify versions in Firebase library dependencies
     implementation(libs.google.firebase.auth)
 
-    // Also add the dependency for the Google Play services library and specify its version
     implementation(libs.play.services.auth)
 
     implementation(libs.android.sdk)
     implementation(libs.android.plugin.annotation.v9)
 
+    // Cliente Supabase para Kotlin
+    implementation(libs.postgrest.kt)
+    implementation(libs.realtime.kt)
+    implementation(libs.storage.kt)
+    implementation(libs.gotrue.kt)
+
+    // Serialización (necesario para algunos módulos)
+    implementation(libs.kotlinx.serialization.json)  // Asegúrate de tener esta dependencia
+
+    // HTTP client (Ktor)
+    implementation(libs.ktor.client.android)
+    implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.serialization.kotlinx.json)
 }

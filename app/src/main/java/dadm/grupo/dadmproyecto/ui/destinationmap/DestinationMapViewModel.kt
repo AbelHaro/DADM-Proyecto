@@ -5,11 +5,12 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationManager
+import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseUser
+import dadm.grupo.dadmproyecto.data.auth.AuthRepository
+import dadm.grupo.dadmproyecto.data.db.LocationsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -24,7 +25,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class DestinationMapViewModel @Inject constructor(
-    private val firebaseAuth: FirebaseAuth,
+    private val authRepository: AuthRepository,
+    private val locationRepository: LocationsRepository,
     private val locationManager: LocationManager,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
@@ -32,21 +34,16 @@ class DestinationMapViewModel @Inject constructor(
     // Coordenadas de la UPV
     val upvPosition = LatLng(UPV_POSITION_LATITUDE, UPV_POSITION_LONGITUDE)
 
-    private val _userData = MutableStateFlow(firebaseAuth.currentUser)
-    val userData: StateFlow<FirebaseUser?> = _userData.asStateFlow()
-
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
     private val _navigationEvent = MutableSharedFlow<NavigationEvent>()
     val navigationEvent: SharedFlow<NavigationEvent> = _navigationEvent.asSharedFlow()
 
-    private val _markers = MutableStateFlow(
-        listOf(
-            LatLng(39.482591772922085, -0.3462456083400781) // Ejemplo de marcador
-        )
-    )
-    val markers: StateFlow<List<LatLng>> = _markers.asStateFlow()
+    private val _markers =
+        MutableStateFlow(emptyList<dadm.grupo.dadmproyecto.domain.model.Location>())
+    val markers: StateFlow<List<dadm.grupo.dadmproyecto.domain.model.Location>> =
+        _markers.asStateFlow()
 
     private val _mapStyle =
         MutableStateFlow(loadJsonFromFile(context, STANDARD_MAP_STYLE))
@@ -68,6 +65,17 @@ class DestinationMapViewModel @Inject constructor(
         )
     val isLocationPermissionGranted: StateFlow<Boolean> =
         _isLocationPermissionGranted.asStateFlow()
+
+
+    init {
+        Log.d("DestinationMapViewModel", "Initializing ViewModel")
+        viewModelScope.launch {
+            Log.d("DestinationMapViewModel", "Fetching locations from repository")
+            _markers.value = locationRepository.getLocations()
+            Log.d("DestinationMapViewModel", "Locations: ${_markers.value}")
+        }
+
+    }
 
 
     // Toggle para cambiar el estado de visibilidad del menú FAB
