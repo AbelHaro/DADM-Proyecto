@@ -4,8 +4,17 @@ import android.app.Application
 import android.location.Location
 import android.os.Looper
 import androidx.lifecycle.AndroidViewModel
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.location.Location
+import android.location.LocationManager
+import android.util.Log
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dadm.grupo.dadmproyecto.data.auth.AuthRepository
+import dadm.grupo.dadmproyecto.data.db.LocationsRepository
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
@@ -18,6 +27,7 @@ import dadm.grupo.dadmproyecto.model.POI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -32,12 +42,15 @@ import javax.inject.Inject
 
 @HiltViewModel
 class DestinationMapViewModel @Inject constructor(
-    application: Application,
-    private val firebaseAuth: FirebaseAuth
+    private val application : Application,
+    private val authRepository: AuthRepository,
+    private val locationRepository: LocationsRepository,
+    private val locationManager: LocationManager,
+    @ApplicationContext private val context: Context
 ) : AndroidViewModel(application) {
 
-    private val _userData = MutableStateFlow<FirebaseUser?>(null)
-    val userData: StateFlow<FirebaseUser?> = _userData.asStateFlow()
+    // Coordenadas de la UPV
+    val upvPosition = LatLng(UPV_POSITION_LATITUDE, UPV_POSITION_LONGITUDE)
 
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
@@ -45,10 +58,32 @@ class DestinationMapViewModel @Inject constructor(
     private val _navigationEvent = MutableSharedFlow<NavigationEvent>()
     val navigationEvent: SharedFlow<NavigationEvent> = _navigationEvent.asSharedFlow()
 
-    private val _markers = MutableStateFlow<List<LatLng>>(emptyList())
-    val markers: StateFlow<List<LatLng>> = _markers.asStateFlow()
+    private val _markers =
+        MutableStateFlow(emptyList<dadm.grupo.dadmproyecto.domain.model.Location>())
+    val markers: StateFlow<List<dadm.grupo.dadmproyecto.domain.model.Location>> =
+        _markers.asStateFlow()
 
-    private val context = application.applicationContext
+    private val _mapStyle =
+        MutableStateFlow(loadJsonFromFile(context, STANDARD_MAP_STYLE))
+    val mapStyle: StateFlow<String> = _mapStyle.asStateFlow()
+
+    private val _myPosition =
+        MutableStateFlow(getLastKnownLocation())
+    val myPosition: StateFlow<Location?> = _myPosition.asStateFlow()
+
+    private val isFabMenuOpen = MutableStateFlow(false)
+    val isFabMenuOpenState: StateFlow<Boolean> = isFabMenuOpen.asStateFlow()
+
+    private var _isLocationPermissionGranted =
+        MutableStateFlow(
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        )
+    val isLocationPermissionGranted: StateFlow<Boolean> =
+        _isLocationPermissionGranted.asStateFlow()
+
     private val locationClient = LocationServices.getFusedLocationProviderClient(context)
 
     private val locationRequest = LocationRequest.Builder(
@@ -64,51 +99,71 @@ class DestinationMapViewModel @Inject constructor(
     val pois: StateFlow<List<POI>> = _pois.asStateFlow()
 
     init {
-        loadUserData()
-        loadInitialMapData()
+        Log.d("DestinationMapViewModel", "Initializing ViewModel")
+        viewModelScope.launch {
+            Log.d("DestinationMapViewModel", "Fetching locations from repository")
+            _markers.value = locationRepository.getLocations()
+            Log.d("DestinationMapViewModel", "Locations: ${_markers.value}")
+        }
+
     }
 
-    fun logout() {
+
+    // Toggle para cambiar el estado de visibilidad del menú FAB
+    fun toggleFabMenu() {
+        isFabMenuOpen.value = !isFabMenuOpen.value
+    }
+
+    // Navega a la pantalla de autenticación
+    fun navigateToAuth() {
         viewModelScope.launch {
-            try {
-                firebaseAuth.signOut()
-                _navigationEvent.emit(NavigationEvent.NavigateToAuth)
-            } catch (e: Exception) {
-                _errorMessage.value = "Error al cerrar sesión: ${e.message}"
-            }
+            _navigationEvent.emit(NavigationEvent.NavigateToAuth)
         }
     }
 
-    private fun loadUserData() {
-        viewModelScope.launch {
-            _userData.value = firebaseAuth.currentUser
-            if (_userData.value == null) {
-                _errorMessage.value = "No hay usuario registrado"
-            }
+    // Recupera la última ubicación conocida
+    private fun getLastKnownLocation(): Location? {
+        return if (ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+        } else {
+            null
         }
     }
 
-    private fun loadInitialMapData() {
-        _markers.value = listOf(
-            LatLng(40.4168, -3.7038), // Madrid
-            LatLng(41.3851, 2.1734)   // Barcelona
-        )
+    // Carga el archivo JSON de un mapa desde los recursos
+    private fun loadJsonFromFile(context: Context, fileName: String): String {
+        return context.assets.open(fileName).bufferedReader().use { it.readText() }
     }
 
-    fun addMarker(position: LatLng) {
-        _markers.value = _markers.value + position
+    fun changeMapStyle(mapStyle: String) {
+        if (_mapStyle.value != mapStyle) {
+            _mapStyle.value = loadJsonFromFile(context, mapStyle)
+        }
     }
 
-    fun removeMarker(position: LatLng) {
-        _markers.value = _markers.value.filter { it != position }
+    fun checkLocationPermission() {
+        _isLocationPermissionGranted.value =
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
     }
 
-    fun getUserEmail(): String = _userData.value?.email ?: "No hay usuario registrado"
+    fun updateCurrentLocation() {
+        if (ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            _myPosition.value = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+        }
+    }
 
-    fun getUserDisplayName(): String = _userData.value?.displayName ?: "No hay usuario registrado"
-
-    fun getUserId(): String = _userData.value?.uid ?: "No hay usuario registrado"
-
+    // Manejo de eventos de navegación
     sealed class NavigationEvent {
         object NavigateToAuth : NavigationEvent()
     }

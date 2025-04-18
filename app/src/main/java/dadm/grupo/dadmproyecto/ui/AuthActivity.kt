@@ -2,50 +2,71 @@ package dadm.grupo.dadmproyecto.ui
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
-import com.google.firebase.auth.FirebaseAuth
 import dadm.grupo.dadmproyecto.R
+import dadm.grupo.dadmproyecto.data.auth.AuthRepository
 import dadm.grupo.dadmproyecto.databinding.ActivityAuthBinding
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class AuthActivity : AppCompatActivity() {
-    private lateinit var auth: FirebaseAuth
+
+    @Inject
+    lateinit var authRepository: AuthRepository
+
     private lateinit var navController: NavController
     private lateinit var binding: ActivityAuthBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Verificar sesión antes de mostrar la UI
-        auth = FirebaseAuth.getInstance()
-        if (auth.currentUser != null) {
-            redirectToMain()
-            return
-        }
+        // Lanzar una corrutina para saber si el usuario está logueado de una sesión anterior
+        lifecycleScope.launch {
+            try {
 
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-        binding = ActivityAuthBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+                if (authRepository.isUserLoggedIn()) {
+                    redirectToMain()
+                    return@launch
+                }
 
-        navController = binding.authFragmentContainer.getFragment<NavHostFragment>().navController
+            } catch (e: Exception) {
+                Log.e("AuthActivity", "Error signing in user: ${e.message}")
+            }
 
-        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            view.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
+            // Continuar con la UI si no está logueado
+            WindowCompat.setDecorFitsSystemWindows(window, false)
+            binding = ActivityAuthBinding.inflate(layoutInflater)
+            setContentView(binding.root)
+
+            navController =
+                binding.authFragmentContainer.getFragment<NavHostFragment>().navController
+
+            ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, insets ->
+                val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+                view.setPadding(
+                    systemBars.left,
+                    systemBars.top,
+                    systemBars.right,
+                    systemBars.bottom
+                )
+                insets
+            }
         }
     }
 
     private fun redirectToMain() {
         startActivity(Intent(this, MainActivity::class.java))
-        finish() // Importante para que no se pueda volver atrás
+        finish()
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -56,7 +77,7 @@ class AuthActivity : AppCompatActivity() {
         if (isOnInitialDestination()) {
             showExitConfirmationDialog()
         } else {
-            super.onBackPressed() // Let Navigation Component handle back press
+            super.onBackPressed()
         }
     }
 

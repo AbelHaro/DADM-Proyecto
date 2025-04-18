@@ -1,0 +1,26 @@
+{
+  "version": 8,
+  "name": "Google Satellite Style",
+  "sources": {
+    "google-satellite": {
+      "type": "raster",
+      "tiles": [
+        "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
+      ],
+      "tileSize": 256,
+      "attribution": "© Google"
+    }
+  },
+  "layers": [
+    {
+      "id": "google-satellite-layer",
+      "type": "raster",
+      "source": "google-satellite",
+      "minzoom": 0,
+      "maxzoom": 22,
+      "layout": {
+        "visibility": "visible"
+      }
+    }
+  ]
+}
