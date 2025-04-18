@@ -1,5 +1,5 @@
 [versions]
-agp = "8.9.1"
+agp = "8.8.2"
 androidPluginAnnotationV9 = "2.0.1"
 androidSdk = "11.5.1"
 datastorePreferences = "1.1.3"
@@ -29,6 +29,7 @@ credentials = "1.5.0"
 credentialsPlayServicesAuth = "1.5.0"
 googleid = "1.1.1"
 firebaseFirestoreKtx = "25.1.3"
+playServicesLocation = "21.3.0"
 
 [libraries]
 android-plugin-annotation-v9 = { module = "org.maplibre.gl:android-plugin-annotation-v9", version.ref = "androidPluginAnnotationV9" }
@@ -64,6 +65,7 @@ androidx-credentials = { group = "androidx.credentials", name = "credentials", v
 androidx-credentials-play-services-auth = { group = "androidx.credentials", name = "credentials-play-services-auth", version.ref = "credentialsPlayServicesAuth" }
 googleid = { group = "com.google.android.libraries.identity.googleid", name = "googleid", version.ref = "googleid" }
 firebase-firestore-ktx = { group = "com.google.firebase", name = "firebase-firestore-ktx", version.ref = "firebaseFirestoreKtx" }
+play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
