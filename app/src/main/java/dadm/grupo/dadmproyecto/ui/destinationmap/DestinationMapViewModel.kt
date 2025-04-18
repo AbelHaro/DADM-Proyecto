@@ -1,33 +1,29 @@
 package dadm.grupo.dadmproyecto.ui.destinationmap
 
-import android.app.Application
-import android.location.Location
-import android.os.Looper
-import androidx.lifecycle.AndroidViewModel
 import android.Manifest
+import android.app.Application
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationManager
+import android.os.Looper
 import android.util.Log
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import dadm.grupo.dadmproyecto.data.auth.AuthRepository
-import dadm.grupo.dadmproyecto.data.db.LocationsRepository
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseUser
-import dagger.hilt.android.lifecycle.HiltViewModel
+import dadm.grupo.dadmproyecto.data.auth.AuthRepository
+import dadm.grupo.dadmproyecto.data.db.LocationsRepository
 import dadm.grupo.dadmproyecto.model.POI
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -42,7 +38,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class DestinationMapViewModel @Inject constructor(
-    private val application : Application,
+    private val application: Application,
     private val authRepository: AuthRepository,
     private val locationRepository: LocationsRepository,
     private val locationManager: LocationManager,
@@ -87,15 +83,18 @@ class DestinationMapViewModel @Inject constructor(
     private val locationClient = LocationServices.getFusedLocationProviderClient(context)
 
     private val locationRequest = LocationRequest.Builder(
-        Priority.PRIORITY_HIGH_ACCURACY, 1000)
+        Priority.PRIORITY_HIGH_ACCURACY, 1000
+    )
         .setMinUpdateDistanceMeters(5f)
         .build()
 
     //POIs (Point of Interest) de prueba
-    private val _pois = MutableStateFlow<List<POI>>(listOf(
-        POI("1", "LaVella", LatLng(39.482287, -0.348746)),
-        POI("2", "ETSInf", LatLng(39.482714, -0.346711))
-    ))
+    private val _pois = MutableStateFlow<List<POI>>(
+        listOf(
+            POI("1", "LaVella", LatLng(39.482287, -0.348746)),
+            POI("2", "ETSInf", LatLng(39.482714, -0.346711))
+        )
+    )
     val pois: StateFlow<List<POI>> = _pois.asStateFlow()
 
     init {
@@ -169,25 +168,26 @@ class DestinationMapViewModel @Inject constructor(
     }
 
     // Mantiene actualizada la ubicación del usuario
-    fun getAccurateLocationUpdates(): Flow<Location?> = callbackFlow @androidx.annotation.RequiresPermission(
-        allOf = [android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION]
-    ) {
-        val locationCallback = object : LocationCallback() {
-            override fun onLocationResult(locationResult: LocationResult) {
-                trySend(locationResult.lastLocation)
+    fun getAccurateLocationUpdates(): Flow<Location?> =
+        callbackFlow @androidx.annotation.RequiresPermission(
+            allOf = [android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION]
+        ) {
+            val locationCallback = object : LocationCallback() {
+                override fun onLocationResult(locationResult: LocationResult) {
+                    trySend(locationResult.lastLocation)
+                }
             }
-        }
 
-        locationClient.requestLocationUpdates(
-            locationRequest,
-            locationCallback,
-            Looper.getMainLooper()
-        )
+            locationClient.requestLocationUpdates(
+                locationRequest,
+                locationCallback,
+                Looper.getMainLooper()
+            )
 
-        awaitClose {
-            locationClient.removeLocationUpdates(locationCallback)
-        }
-    }.flowOn(Dispatchers.IO)
+            awaitClose {
+                locationClient.removeLocationUpdates(locationCallback)
+            }
+        }.flowOn(Dispatchers.IO)
 
     // Comprueba si el usuario pasa por algun POI
     fun isNearLocation(user: LatLng, poi: LatLng, radiusMeters: Double = 50.0): Boolean {

@@ -1,7 +1,8 @@
 package dadm.grupo.dadmproyecto.ui.destinationmap
 
-import android.content.Intent
+import android.annotation.SuppressLint
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,14 +14,15 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import dadm.grupo.dadmproyecto.databinding.FragmentDestinationMapBinding
-import dadm.grupo.dadmproyecto.ui.AuthActivity
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import org.maplibre.android.MapLibre
 import org.maplibre.android.WellKnownTileServer
-import org.maplibre.android.camera.CameraPosition
-import org.maplibre.android.geometry.LatLng
-import org.maplibre.android.geometry.LatLngBounds
+import org.maplibre.android.annotations.MarkerOptions
+import org.maplibre.android.location.LocationComponentActivationOptions
+import org.maplibre.android.location.LocationComponentOptions
+import org.maplibre.android.location.engine.LocationEngineRequest
+import org.maplibre.android.location.modes.CameraMode
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.OnMapReadyCallback
 import org.maplibre.android.maps.Style
@@ -264,9 +266,8 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
                     } else {
                         Log.d("DestinationMapFragment", "Location permissions not granted")
                     }
-                }
-                // Monitoriza los cambios de posicion para actualizar los POIs
-                launch {
+
+                    // Monitoriza los cambios de posicion para actualizar los POIs
                     viewModel.getAccurateLocationUpdates().collect { location ->
                         location?.let {
                             val currentLatLng = org.maplibre.android.geometry.LatLng(
@@ -274,8 +275,16 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
                                 it.longitude
                             )
                             val updatedPOIs = viewModel.pois.value.map { poi ->
-                                if (!poi.discovered && viewModel.isNearLocation(currentLatLng, poi.location)) {
-                                    Snackbar.make(binding.root, "¡Descubriste: ${poi.name}!", Snackbar.LENGTH_SHORT).show()
+                                if (!poi.discovered && viewModel.isNearLocation(
+                                        currentLatLng,
+                                        poi.location
+                                    )
+                                ) {
+                                    Snackbar.make(
+                                        binding.root,
+                                        "¡Descubriste: ${poi.name}!",
+                                        Snackbar.LENGTH_SHORT
+                                    ).show()
                                     poi.copy(discovered = false) // Cambiar a false para pruebas
                                 } else poi
                             }
@@ -285,32 +294,50 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
                 }
             }
         }
+        setupFabAnimations()
+
+        binding.fabMain.setOnClickListener {
+            viewModel.toggleFabMenu()
+        }
+
+        binding.fabStyleStandard.setOnClickListener {
+            viewModel.changeMapStyle(STANDARD_MAP_STYLE)
+            viewModel.toggleFabMenu()
+        }
+
+        binding.fabStyleSatellite.setOnClickListener {
+            viewModel.changeMapStyle(SATELLITE_MAP_STYLE)
+            viewModel.toggleFabMenu()
+        }
     }
 
     private fun observeUserLocation() {
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.getAccurateLocationUpdates().collect { location ->
-                    location?.let {
-                        val currentLatLng = LatLng(it.latitude, it.longitude)
-
-                        // Actualiza el marcador si ya existe
-                        if (currentLocationMarker != null) {
-                            currentLocationMarker?.position = currentLatLng
-                        } else {
-                            // Crea el marcador por primera vez
-                            currentLocationMarker = mapLibreMap?.addMarker(
-                                org.maplibre.android.annotations.MarkerOptions()
-                                    .position(currentLatLng)
-                                    .title("Ubicación actual")
-                            )
-                        }
-                        // Situa la vista del mapa en la ubicacion actual, igual es un poco molesto
-                        mapLibreMap?.moveCamera(
-                            org.maplibre.android.camera.CameraUpdateFactory.newLatLngZoom(currentLatLng, 15.0)
-                        )
-                    }
-                }
+//                viewModel.getAccurateLocationUpdates().collect { location ->
+//                    location?.let {
+//                        val currentLatLng = LatLng(it.latitude, it.longitude)
+//
+//                        // Actualiza el marcador si ya existe
+//                        if (currentLocationMarker != null) {
+//                            currentLocationMarker?.position = currentLatLng
+//                        } else {
+//                            // Crea el marcador por primera vez
+//                            currentLocationMarker = mapLibreMap?.addMarker(
+//                                org.maplibre.android.annotations.MarkerOptions()
+//                                    .position(currentLatLng)
+//                                    .title("Ubicación actual")
+//                            )
+//                        }
+//                        // Situa la vista del mapa en la ubicacion actual, igual es un poco molesto
+//                        mapLibreMap?.moveCamera(
+//                            org.maplibre.android.camera.CameraUpdateFactory.newLatLngZoom(
+//                                currentLatLng,
+//                                15.0
+//                            )
+//                        )
+//                    }
+//                }
             }
         }
 
