@@ -12,7 +12,6 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.location.LocationCallback
-import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
@@ -82,9 +81,8 @@ class DestinationMapViewModel @Inject constructor(
 
     private val locationClient = LocationServices.getFusedLocationProviderClient(context)
 
-    private val locationRequest = LocationRequest.Builder(
-        Priority.PRIORITY_HIGH_ACCURACY, 1000
-    )
+    private val locationRequest = com.google.android.gms.location.LocationRequest.Builder(1000)
+        .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
         .setMinUpdateDistanceMeters(5f)
         .build()
 
@@ -103,6 +101,14 @@ class DestinationMapViewModel @Inject constructor(
             Log.d("DestinationMapViewModel", "Fetching locations from repository")
             _markers.value = locationRepository.getLocations()
             Log.d("DestinationMapViewModel", "Locations: ${_markers.value}")
+        }
+
+        viewModelScope.launch {
+            val currentUser = authRepository.getCurrentUser()
+            currentUser?.id?.let { userId ->
+                val myLocationsVisited = locationRepository.getMyLocationsVisited(userId)
+                Log.d("DestinationMapViewModel", "My locations visited: $myLocationsVisited")
+            }
         }
 
     }
@@ -170,7 +176,7 @@ class DestinationMapViewModel @Inject constructor(
     // Mantiene actualizada la ubicación del usuario
     fun getAccurateLocationUpdates(): Flow<Location?> =
         callbackFlow @androidx.annotation.RequiresPermission(
-            allOf = [android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION]
+            allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION]
         ) {
             val locationCallback = object : LocationCallback() {
                 override fun onLocationResult(locationResult: LocationResult) {
