@@ -23,6 +23,7 @@ import org.maplibre.android.location.LocationComponentActivationOptions
 import org.maplibre.android.location.LocationComponentOptions
 import org.maplibre.android.location.engine.LocationEngineRequest
 import org.maplibre.android.location.modes.CameraMode
+import org.maplibre.android.location.modes.RenderMode
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.OnMapReadyCallback
 import org.maplibre.android.maps.Style
@@ -77,6 +78,7 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
                 locationComponent.activateLocationComponent(locationComponentActivationOptions)
                 locationComponent.isLocationComponentEnabled = true
                 locationComponent.cameraMode = CameraMode.TRACKING
+                locationComponent.renderMode = RenderMode.COMPASS
             } else {
                 Log.d("DestinationMapFragment", "Location permissions not granted")
             }

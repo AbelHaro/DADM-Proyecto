@@ -25,7 +25,7 @@
         android:visibility="invisible"
         app:layout_constraintBottom_toTopOf="@id/fabStyleSatellite"
         app:layout_constraintEnd_toEndOf="parent"
-        app:srcCompat="@drawable/standard_style_icon" />
+        app:srcCompat="@drawable/icon_relief" />
 
     <!-- FAB for Satellite Map Style - Initially invisible -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -38,7 +38,7 @@
         android:visibility="invisible"
         app:layout_constraintBottom_toTopOf="@id/fabMain"
         app:layout_constraintEnd_toEndOf="parent"
-        app:srcCompat="@drawable/satellite_style_icon" />
+        app:srcCompat="@drawable/icon_satellite" />
 
     <!-- FAB Principal -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -49,6 +49,7 @@
         android:layout_marginBottom="128dp"
         android:contentDescription="Menú principal"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:srcCompat="@drawable/icon_plus" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
