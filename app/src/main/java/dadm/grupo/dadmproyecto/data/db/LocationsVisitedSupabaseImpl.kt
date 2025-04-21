@@ -26,7 +26,12 @@ class LocationsVisitedSupabaseImpl @Inject constructor(
         userId: String,
         locationId: Long
     ): Boolean {
-        return supabaseClient.from("locations_visited")
-            .insert(LocationVisited(userId, locationId))
+        return try {
+            supabaseClient.from("locations_visited")
+                .insert(LocationVisited(userId, locationId))
+            true
+        } catch (e: Exception) {
+            false
+        }
     }
 }
