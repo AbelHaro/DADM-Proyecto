@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import coil.load
 import dadm.grupo.dadmproyecto.R
 import dadm.grupo.dadmproyecto.data.auth.AuthRepository
 import dadm.grupo.dadmproyecto.databinding.FragmentRankingBinding
@@ -33,6 +34,21 @@ class RankingFragment : Fragment(R.layout.fragment_ranking) {
 
         binding.btnLogout.setOnClickListener {
             handleLogout()
+        }
+
+        val imageUrl =
+            "https://idzjjzlrreqfcnakfolk.supabase.co/storage/v1/object/public/images//etsinf.jpg"
+// Set image size to 200x200 dp
+        val sizeInDp = 200
+        val sizeInPx = (sizeInDp * resources.displayMetrics.density).toInt()
+        binding.imageView.layoutParams = binding.imageView.layoutParams.apply {
+            width = sizeInPx
+            height = sizeInPx
+        }
+
+        binding.imageView.load(imageUrl) {
+            placeholder(R.drawable.ic_launcher_background)
+            error(R.drawable.ic_launcher_foreground)
         }
 
         return binding.root
