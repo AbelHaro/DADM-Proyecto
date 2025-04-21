@@ -39,6 +39,7 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
                 // or display a notification to the user
                 Log.d("GeofenceBroadcastReceiver", "Entered location: $locationId")
 
+
                 // Show notification
                 GeofenceHelper.showLocationNotification(context, locationId)
             }

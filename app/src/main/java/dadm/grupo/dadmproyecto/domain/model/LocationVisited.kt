@@ -7,5 +7,5 @@ import kotlinx.serialization.Serializable
 data class LocationVisited(
     @SerialName("user_id") val id: String,
     @SerialName("location_id") val locationId: Long,
-    @SerialName("created_at") val createdAt: String,
+    @SerialName("created_at") val createdAt: String? = null,
 )

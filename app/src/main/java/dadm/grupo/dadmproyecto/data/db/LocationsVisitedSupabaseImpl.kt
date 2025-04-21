@@ -21,4 +21,12 @@ class LocationsVisitedSupabaseImpl @Inject constructor(
             }
             .decodeList<LocationVisited>()
     }
+
+    override suspend fun insertLocationVisited(
+        userId: String,
+        locationId: Long
+    ): Boolean {
+        return supabaseClient.from("locations_visited")
+            .insert(LocationVisited(userId, locationId))
+    }
 }

@@ -14,6 +14,8 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.android.gms.common.ConnectionResult
+import com.google.android.gms.common.GoogleApiAvailability
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingClient
 import com.google.android.gms.location.GeofencingRequest
@@ -101,6 +103,11 @@ class DestinationMapViewModel @Inject constructor(
     val pois: StateFlow<List<POI>> = _pois.asStateFlow()
 
     init {
+
+        val resultCode = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(context)
+
+        Log.d("GooglePlay", " Servicios de Google Play: ${resultCode == ConnectionResult.SUCCESS}")
+
         viewModelScope.launch {
             Log.d("DestinationMapViewModel", "Fetching locations from repository")
             _markers.value = locationRepository.getLocations()
@@ -251,7 +258,7 @@ class DestinationMapViewModel @Inject constructor(
                 Log.d("GeofenceManager", "Geofences added successfully")
             }
             .addOnFailureListener { e ->
-                Log.e("GeofenceManager", "Failed to add geofences: ${e.message}")
+                Log.e("GeofenceManager", "Failed to add geofences: ${e}")
             }
     }
 

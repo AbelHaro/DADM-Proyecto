@@ -28,6 +28,8 @@
             android:exported="true" />
 
 
+        <receiver android:name=".ui.destinationmap.GeofenceBroadcastReceiver" />
+
         <activity
             android:name=".ui.AuthActivity"
             android:exported="true"
