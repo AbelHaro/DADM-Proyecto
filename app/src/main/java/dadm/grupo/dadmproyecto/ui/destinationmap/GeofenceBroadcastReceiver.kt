@@ -7,10 +7,23 @@ import android.util.Log
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofenceStatusCodes
 import com.google.android.gms.location.GeofencingEvent
+import dadm.grupo.dadmproyecto.data.auth.AuthRepository
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
+import dadm.grupo.dadmproyecto.data.db.LocationsVisitedRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class GeofenceBroadcastReceiver : BroadcastReceiver() {
+
+    @Inject
+    lateinit var locationsVisitedRepository: LocationsVisitedRepository
+
+    @Inject
+    lateinit var authRepository: AuthRepository
+
     override fun onReceive(context: Context?, intent: Intent?) {
         if (context == null || intent == null) return
 
@@ -35,10 +48,19 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
                 // Get the location ID from the geofence request ID
                 val locationId = geofence.requestId
 
-                // You could send this to a service to process in the background
-                // or display a notification to the user
                 Log.d("GeofenceBroadcastReceiver", "Entered location: $locationId")
+                CoroutineScope(Dispatchers.IO).launch {
+                    val userInfo = authRepository.getCurrentUser()
 
+                    if (userInfo == null) {
+                        Log.e("GeofenceBroadcastReceiver", "User not logged in")
+                        return@launch
+                    }
+                    locationsVisitedRepository.insertLocationVisited(
+                        userInfo.id,
+                        locationId.toLong()
+                    )
+                }
 
                 // Show notification
                 GeofenceHelper.showLocationNotification(context, locationId)
