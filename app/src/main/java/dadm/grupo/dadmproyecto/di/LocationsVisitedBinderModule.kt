@@ -10,11 +10,11 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class LocationVisitedBinderModule {
+abstract class LocationsVisitedBinderModule {
 
     @Binds
     @Singleton
-    abstract fun bindLocationVisitedRepository(
+    abstract fun bindLocationsVisitedRepository(
         impl: LocationsVisitedSupabaseImpl
     ): LocationsVisitedRepository
 }

@@ -12,7 +12,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.google.android.material.snackbar.Snackbar
 import dadm.grupo.dadmproyecto.databinding.FragmentDestinationMapBinding
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -151,16 +150,6 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
 
     // Observa los eventos de navegación desde el ViewModel
     private fun observeNavigationEvents() {
-//        viewLifecycleOwner.lifecycleScope.launch {
-//            repeatOnLifecycle(Lifecycle.State.STARTED) {
-//                viewModel.navigationEvent.collect { event ->
-//                    when (event) {
-//                        is DestinationMapViewModel.NavigationEvent.NavigateToAuth -> navigateToAuth()
-//                    }
-//                }
-//            }
-//        }
-
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.isFabMenuOpenState.collect { isMenuOpen ->
@@ -269,28 +258,21 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
                         Log.d("DestinationMapFragment", "Location permissions not granted")
                     }
 
-                    // Monitoriza los cambios de posicion para actualizar los POIs
+                    // Monitoriza los cambios de posicion para actualizar la UI en tiempo real
                     viewModel.getAccurateLocationUpdates().collect { location ->
                         location?.let {
                             val currentLatLng = org.maplibre.android.geometry.LatLng(
                                 it.latitude,
                                 it.longitude
                             )
-                            val updatedPOIs = viewModel.pois.value.map { poi ->
-                                if (!poi.discovered && viewModel.isNearLocation(
-                                        currentLatLng,
-                                        poi.location
+                            if (mapLibreMap != null) {
+                                mapLibreMap!!.locationComponent.forceLocationUpdate(it)
+                                mapLibreMap!!.animateCamera(
+                                    org.maplibre.android.camera.CameraUpdateFactory.newLatLng(
+                                        currentLatLng
                                     )
-                                ) {
-                                    Snackbar.make(
-                                        binding.root,
-                                        "¡Descubriste: ${poi.name}!",
-                                        Snackbar.LENGTH_SHORT
-                                    ).show()
-                                    poi.copy(discovered = false) // Cambiar a false para pruebas
-                                } else poi
+                                )
                             }
-                            viewModel.updatePOIs(updatedPOIs)
                         }
                     }
                 }
@@ -312,62 +294,6 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
             viewModel.toggleFabMenu()
         }
     }
-
-    private fun observeUserLocation() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-//                viewModel.getAccurateLocationUpdates().collect { location ->
-//                    location?.let {
-//                        val currentLatLng = LatLng(it.latitude, it.longitude)
-//
-//                        // Actualiza el marcador si ya existe
-//                        if (currentLocationMarker != null) {
-//                            currentLocationMarker?.position = currentLatLng
-//                        } else {
-//                            // Crea el marcador por primera vez
-//                            currentLocationMarker = mapLibreMap?.addMarker(
-//                                org.maplibre.android.annotations.MarkerOptions()
-//                                    .position(currentLatLng)
-//                                    .title("Ubicación actual")
-//                            )
-//                        }
-//                        // Situa la vista del mapa en la ubicacion actual, igual es un poco molesto
-//                        mapLibreMap?.moveCamera(
-//                            org.maplibre.android.camera.CameraUpdateFactory.newLatLngZoom(
-//                                currentLatLng,
-//                                15.0
-//                            )
-//                        )
-//                    }
-//                }
-            }
-        }
-
-        setupFabAnimations()
-
-        binding.fabMain.setOnClickListener {
-            viewModel.toggleFabMenu()
-        }
-
-        binding.fabStyleStandard.setOnClickListener {
-            viewModel.changeMapStyle(STANDARD_MAP_STYLE)
-            viewModel.toggleFabMenu()
-        }
-
-        binding.fabStyleSatellite.setOnClickListener {
-            viewModel.changeMapStyle(SATELLITE_MAP_STYLE)
-            viewModel.toggleFabMenu()
-        }
-    }
-
-//    private fun navigateToAuth() {
-//        Intent(requireActivity(), AuthActivity::class.java).apply {
-//            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-//        }.also { intent ->
-//            startActivity(intent)
-//            requireActivity().finish()
-//        }
-//    }
 
     override fun onStart() {
         super.onStart()

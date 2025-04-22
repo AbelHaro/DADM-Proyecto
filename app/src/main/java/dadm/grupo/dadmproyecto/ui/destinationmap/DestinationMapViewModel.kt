@@ -2,7 +2,6 @@ package dadm.grupo.dadmproyecto.ui.destinationmap
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.app.Application
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
@@ -12,7 +11,7 @@ import android.location.LocationManager
 import android.os.Looper
 import android.util.Log
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
@@ -26,7 +25,6 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import dadm.grupo.dadmproyecto.data.auth.AuthRepository
 import dadm.grupo.dadmproyecto.data.db.LocationsRepository
-import dadm.grupo.dadmproyecto.model.POI
 import dadm.grupo.dadmproyecto.ui.geofence.GeofenceBroadcastReceiver
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -47,13 +45,11 @@ import javax.inject.Inject
 
 @HiltViewModel
 class DestinationMapViewModel @Inject constructor(
-    private val application: Application,
     private val authRepository: AuthRepository,
     private val locationRepository: LocationsRepository,
     private val locationManager: LocationManager,
     @ApplicationContext private val context: Context
-) : AndroidViewModel(application) {
-
+) : ViewModel() {
     val upvPosition = LatLng(UPV_POSITION_LATITUDE, UPV_POSITION_LONGITUDE)
 
     private val _errorMessage = MutableStateFlow<String?>(null)
@@ -94,13 +90,6 @@ class DestinationMapViewModel @Inject constructor(
     private val geofenceList = mutableListOf<Geofence>()
     private lateinit var geofencePendingIntent: PendingIntent
 
-    private val _pois = MutableStateFlow<List<POI>>(
-        listOf(
-            POI("1", "LaVella", LatLng(39.482287, -0.348746)),
-            POI("2", "ETSInf", LatLng(39.482714, -0.346711))
-        )
-    )
-    val pois: StateFlow<List<POI>> = _pois.asStateFlow()
 
     init {
 
@@ -209,9 +198,6 @@ class DestinationMapViewModel @Inject constructor(
         return results[0] <= radiusMeters
     }
 
-    fun updatePOIs(newPOIs: List<POI>) {
-        _pois.value = newPOIs
-    }
 
     private fun createGeofencesFromLocations(locations: List<dadm.grupo.dadmproyecto.domain.model.Location>) {
         geofenceList.clear()
