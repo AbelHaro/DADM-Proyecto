@@ -61,8 +61,7 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
                         locationId.toLong()
                     )
                 }
-
-                // Show notification
+                
                 GeofenceHelper.showLocationNotification(context, locationId)
             }
         }

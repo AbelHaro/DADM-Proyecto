@@ -31,11 +31,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOn
@@ -52,12 +49,6 @@ class DestinationMapViewModel @Inject constructor(
 ) : ViewModel() {
     val upvPosition = LatLng(UPV_POSITION_LATITUDE, UPV_POSITION_LONGITUDE)
 
-    private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
-
-    private val _navigationEvent = MutableSharedFlow<NavigationEvent>()
-    val navigationEvent: SharedFlow<NavigationEvent> = _navigationEvent.asSharedFlow()
-
     private val _markers =
         MutableStateFlow(emptyList<dadm.grupo.dadmproyecto.domain.model.Location>())
     val markers: StateFlow<List<dadm.grupo.dadmproyecto.domain.model.Location>> =
@@ -66,8 +57,6 @@ class DestinationMapViewModel @Inject constructor(
     private val _mapStyle = MutableStateFlow(loadJsonFromFile(context, STANDARD_MAP_STYLE))
     val mapStyle: StateFlow<String> = _mapStyle.asStateFlow()
 
-    private val _myPosition = MutableStateFlow(getLastKnownLocation())
-    val myPosition: StateFlow<Location?> = _myPosition.asStateFlow()
 
     private val isFabMenuOpen = MutableStateFlow(false)
     val isFabMenuOpenState: StateFlow<Boolean> = isFabMenuOpen.asStateFlow()
@@ -86,7 +75,8 @@ class DestinationMapViewModel @Inject constructor(
         .setMinUpdateDistanceMeters(5f)
         .build()
 
-    var geofencingClient: GeofencingClient = LocationServices.getGeofencingClient(context)
+    var geofencingClient: GeofencingClient =
+        LocationServices.getGeofencingClient(context)
     private val geofenceList = mutableListOf<Geofence>()
     private lateinit var geofencePendingIntent: PendingIntent
 
@@ -118,24 +108,6 @@ class DestinationMapViewModel @Inject constructor(
         isFabMenuOpen.value = !isFabMenuOpen.value
     }
 
-    fun navigateToAuth() {
-        viewModelScope.launch {
-            _navigationEvent.emit(NavigationEvent.NavigateToAuth)
-        }
-    }
-
-    private fun getLastKnownLocation(): Location? {
-        return if (ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            )
-            == PackageManager.PERMISSION_GRANTED
-        ) {
-            locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
-        } else {
-            null
-        }
-    }
 
     private fun loadJsonFromFile(context: Context, fileName: String): String {
         return context.assets.open(fileName).bufferedReader().use { it.readText() }
@@ -153,17 +125,6 @@ class DestinationMapViewModel @Inject constructor(
                     PackageManager.PERMISSION_GRANTED
     }
 
-    fun updateCurrentLocation() {
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
-            == PackageManager.PERMISSION_GRANTED
-        ) {
-            _myPosition.value = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
-        }
-    }
-
-    sealed class NavigationEvent {
-        object NavigateToAuth : NavigationEvent()
-    }
 
     fun getAccurateLocationUpdates(): Flow<Location?> =
         callbackFlow @androidx.annotation.RequiresPermission(
@@ -185,19 +146,6 @@ class DestinationMapViewModel @Inject constructor(
                 locationClient.removeLocationUpdates(locationCallback)
             }
         }.flowOn(Dispatchers.IO)
-
-    fun isNearLocation(user: LatLng, poi: LatLng, radiusMeters: Double = 50.0): Boolean {
-        val results = FloatArray(1)
-        Location.distanceBetween(
-            user.latitude,
-            user.longitude,
-            poi.latitude,
-            poi.longitude,
-            results
-        )
-        return results[0] <= radiusMeters
-    }
-
 
     private fun createGeofencesFromLocations(locations: List<dadm.grupo.dadmproyecto.domain.model.Location>) {
         geofenceList.clear()
@@ -238,6 +186,7 @@ class DestinationMapViewModel @Inject constructor(
         }.build()
 
         geofencePendingIntent = getPendingIntent()
+
 
         geofencingClient.addGeofences(geofencingRequest, geofencePendingIntent)
             .addOnSuccessListener {

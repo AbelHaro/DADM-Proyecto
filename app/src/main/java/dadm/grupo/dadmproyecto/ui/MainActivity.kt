@@ -1,8 +1,6 @@
 package dadm.grupo.dadmproyecto.ui
 
-import android.Manifest
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
@@ -10,19 +8,18 @@ import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import dadm.grupo.dadmproyecto.R
 import dadm.grupo.dadmproyecto.data.auth.AuthRepository
 import dadm.grupo.dadmproyecto.databinding.ActivityMainBinding
+import dadm.grupo.dadmproyecto.utils.PermissionUtils
+import dadm.grupo.dadmproyecto.utils.PermissionUtils.requestBackgroundLocationPermission
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -57,40 +54,37 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
-        if (!hasLocationPermission()) {
-            requestLocationPermission()
-        }
-
-        lifecycleScope.launch {
-            try {
-                val user = authRepository.getCurrentUser()
-                if (user != null) {
-                    Log.d("MainActivity", "User is logged in: ${user.email}")
-
-                } else {
-                    // User is not logged in, show login screen
-                    Log.d("MainActivity", "User is not logged in")
-                }
-            } catch (e: Exception) {
-                Log.w("MainActivity", "Error getting user: ${e.message}")
+        try {
+            if (!PermissionUtils.hasLocationPermission(this@MainActivity)) {
+                Log.d("MainActivity", "Requesting location permission")
+                PermissionUtils.requestLocationPermission(this@MainActivity)
             }
-        }
 
+            if (!PermissionUtils.hasBackgroundLocationPermission(this@MainActivity)) {
+                Log.d("MainActivity", "Requesting background location permission")
+                requestBackgroundLocationPermission(this@MainActivity)
+            }
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error checking permissions or login: ${e.message}")
+        }
     }
 
     override fun onSupportNavigateUp(): Boolean {
         return navController.navigateUp() || super.onSupportNavigateUp()
     }
 
-    private fun hasLocationPermission(): Boolean {
-        return ActivityCompat.checkSelfPermission(
-            this, Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
+    override fun onBackPressed() {
+        if (isOnInitialDestination()) {
+            showExitConfirmationDialog()
+        } else {
+            super.onBackPressed()
+        }
     }
 
-    private fun requestLocationPermission() {
-        requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+    private fun isOnInitialDestination(): Boolean {
+        return navController.currentDestination?.id == navController.graph.startDestinationId
     }
+
 
     private fun showExitConfirmationDialog() {
         AlertDialog.Builder(this)
