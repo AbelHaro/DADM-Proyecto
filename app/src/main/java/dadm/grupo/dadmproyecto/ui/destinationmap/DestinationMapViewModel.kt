@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
-import android.location.LocationManager
 import android.os.Looper
 import android.util.Log
 import androidx.core.content.ContextCompat
@@ -44,7 +43,6 @@ import javax.inject.Inject
 class DestinationMapViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val locationRepository: LocationsRepository,
-    private val locationManager: LocationManager,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
     val upvPosition = LatLng(UPV_POSITION_LATITUDE, UPV_POSITION_LONGITUDE)
@@ -125,22 +123,33 @@ class DestinationMapViewModel @Inject constructor(
                     PackageManager.PERMISSION_GRANTED
     }
 
-
     fun getAccurateLocationUpdates(): Flow<Location?> =
-        callbackFlow @androidx.annotation.RequiresPermission(
-            allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION]
-        ) {
+        callbackFlow {
             val locationCallback = object : LocationCallback() {
                 override fun onLocationResult(locationResult: LocationResult) {
                     trySend(locationResult.lastLocation)
                 }
             }
 
-            locationClient.requestLocationUpdates(
-                locationRequest,
-                locationCallback,
-                Looper.getMainLooper()
-            )
+            if (ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED
+            ) {
+                try {
+                    locationClient.requestLocationUpdates(
+                        locationRequest,
+                        locationCallback,
+                        Looper.getMainLooper()
+                    )
+                } catch (e: SecurityException) {
+                    Log.e("DestinationMapViewModel", "Security exception: ${e.message}")
+                    close(e)
+                }
+            } else {
+                Log.d("DestinationMapViewModel", "Location permission not granted")
+                close(SecurityException("Location permission not granted"))
+            }
 
             awaitClose {
                 locationClient.removeLocationUpdates(locationCallback)

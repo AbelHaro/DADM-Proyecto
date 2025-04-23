@@ -260,6 +260,7 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
 
                     // Monitoriza los cambios de posicion para actualizar la UI en tiempo real
                     viewModel.getAccurateLocationUpdates().collect { location ->
+                        Log.d("DestinationMapFragment", "Location updated: $location")
                         location?.let {
                             val currentLatLng = org.maplibre.android.geometry.LatLng(
                                 it.latitude,
