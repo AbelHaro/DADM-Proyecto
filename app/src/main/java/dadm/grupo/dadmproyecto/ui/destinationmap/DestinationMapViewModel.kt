@@ -59,6 +59,12 @@ class DestinationMapViewModel @Inject constructor(
     private val _lastDiscoveredLocationId =
         MutableStateFlow<Long?>(null)
 
+    private val _lastDiscoveredLocation =
+        MutableStateFlow<dadm.grupo.dadmproyecto.domain.model.Location?>(null)
+
+    val lastDiscoveredLocation: StateFlow<dadm.grupo.dadmproyecto.domain.model.Location?> =
+        _lastDiscoveredLocation.asStateFlow()
+
     private val _mapStyle = MutableStateFlow(loadJsonFromFile(context, STANDARD_MAP_STYLE))
     val mapStyle: StateFlow<String> = _mapStyle.asStateFlow()
 
@@ -144,7 +150,11 @@ class DestinationMapViewModel @Inject constructor(
                 _lastDiscoveredLocationId.value = locationId
                 val location = _allLoctions.value.find { it.id == locationId }
 
-                _visitedLocations.value += (location ?: return@collect)
+                _lastDiscoveredLocation.value = location
+
+                if (!_visitedLocations.value.any { it.id == locationId }) {
+                    _visitedLocations.value += location ?: return@collect
+                }
 
                 _notVisitedLocations.value =
                     _notVisitedLocations.value.filter { it.id != locationId }

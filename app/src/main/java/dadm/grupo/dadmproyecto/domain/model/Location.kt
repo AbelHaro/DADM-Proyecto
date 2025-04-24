@@ -12,4 +12,5 @@ data class Location(
     @SerialName("latitude") val latitude: Double,
     @SerialName("longitude") val longitude: Double,
     @SerialName("radius") val radius: Double,
+    @SerialName("image_url") val imageUrl: String,
 )

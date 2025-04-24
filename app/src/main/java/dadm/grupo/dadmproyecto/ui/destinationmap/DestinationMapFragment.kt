@@ -14,6 +14,8 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.AccelerateInterpolator
+import android.view.animation.DecelerateInterpolator
 import androidx.core.graphics.createBitmap
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -24,11 +26,13 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 import dadm.grupo.dadmproyecto.databinding.FragmentDestinationMapBinding
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.maplibre.android.MapLibre
 import org.maplibre.android.WellKnownTileServer
 import org.maplibre.android.annotations.IconFactory
+import org.maplibre.android.annotations.Marker
 import org.maplibre.android.annotations.MarkerOptions
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.location.LocationComponentActivationOptions
@@ -41,7 +45,6 @@ import org.maplibre.android.maps.OnMapReadyCallback
 import org.maplibre.android.maps.Style
 import java.net.URL
 import javax.net.ssl.HttpsURLConnection
-import kotlin.math.min
 
 
 @AndroidEntryPoint
@@ -206,35 +209,167 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
 
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
+                val markerOriginalBitmaps = mutableMapOf<Marker, Bitmap>()
+                var selectedMarker: Marker?
+
                 viewModel.visitedLocations.collect { visitedLocations ->
                     mapLibreMap?.removeAnnotations()
+                    markerOriginalBitmaps.clear()
+                    selectedMarker = null
 
                     visitedLocations.forEach { visitedLocation ->
                         val latLng = LatLng(visitedLocation.latitude, visitedLocation.longitude)
 
-                        // Llamamos a la función que descarga la imagen
-                        val imageUrl =
-                            "https://idzjjzlrreqfcnakfolk.supabase.co/storage/v1/object/public/images//etsinf.jpg"
-                        val bitmap = loadBitmapFromUrl(imageUrl)
+                        // Cargar la imagen desde la URL
+                        val bitmap = loadBitmapFromUrl(visitedLocation.imageUrl)
 
                         bitmap?.let {
-                            val circularBitmap = createCircularBitmapFromBitmap(it)
+                            // Redimensionar la imagen a un tamaño fijo de 200x200 píxeles
+                            val circularBitmap =
+                                createCircularBitmapFromBitmap(it, targetSize = 125) // Tamaño fijo
                             val iconFactory = IconFactory.getInstance(requireContext())
                             val icon = iconFactory.fromBitmap(circularBitmap)
 
                             val markerOptions = MarkerOptions()
-                                .snippet(visitedLocation.description)
                                 .position(latLng)
                                 .title(visitedLocation.name)
+                                .snippet(visitedLocation.description)
                                 .icon(icon)
 
-                            mapLibreMap?.addMarker(markerOptions)
+                            val marker = mapLibreMap?.addMarker(markerOptions)
+                            marker?.let { m ->
+                                markerOriginalBitmaps[m] = circularBitmap
+                            }
                         }
+                    }
+
+                    mapLibreMap?.setOnMarkerClickListener { marker ->
+                        if (selectedMarker == marker) {
+                            // Restaurar tamaño original
+                            markerOriginalBitmaps[marker]?.let {
+                                val iconFactory = IconFactory.getInstance(requireContext())
+                                val icon = iconFactory.fromBitmap(it)
+                                marker.icon = icon
+                            }
+                            marker.hideInfoWindow()  // Esconder la InfoWindow
+                            selectedMarker = null
+                        } else {
+                            // Restaurar el marcador anterior
+                            selectedMarker?.let { prevMarker ->
+                                markerOriginalBitmaps[prevMarker]?.let {
+                                    val iconFactory = IconFactory.getInstance(requireContext())
+                                    val icon = iconFactory.fromBitmap(it)
+                                    prevMarker.icon = icon
+                                }
+                                prevMarker.hideInfoWindow()  // Esconder la InfoWindow del anterior
+                            }
+
+                            // Ampliar el nuevo marcador
+                            markerOriginalBitmaps[marker]?.let { originalBitmap ->
+                                val enlargedBitmap =
+                                    createCircularBitmapFromBitmap(
+                                        originalBitmap,
+                                        targetSize = 250
+                                    ) // Tamaño ampliado
+                                val iconFactory = IconFactory.getInstance(requireContext())
+                                val enlargedIcon = iconFactory.fromBitmap(enlargedBitmap)
+                                marker.icon = enlargedIcon
+                            }
+
+                            marker.showInfoWindow(mapLibreMap!!, binding.mapView)
+                            selectedMarker = marker
+                        }
+                        true
+                    }
+
+                    // Esconder la InfoWindow al hacer clic fuera de los marcadores
+                    mapLibreMap?.addOnMapClickListener {
+                        selectedMarker?.let { marker ->
+                            markerOriginalBitmaps[marker]?.let {
+                                val iconFactory = IconFactory.getInstance(requireContext())
+                                val icon = iconFactory.fromBitmap(it)
+                                marker.icon = icon
+                            }
+                            marker.hideInfoWindow()  // Esconder la InfoWindow
+                            selectedMarker = null
+                        }
+                        true
                     }
                 }
             }
         }
 
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.lastDiscoveredLocation.collect { lastLocation ->
+                    if (lastLocation == null) return@collect
+
+                    Log.d("DestinationMapFragment", "Last discovered location: $lastLocation")
+
+                    val bitmap = loadBitmapFromUrl(lastLocation.imageUrl)
+
+                    bitmap?.let {
+                        val circularBitmap = createCircularBitmapFromBitmap(it, targetSize = 600)
+                        binding.ivNewLocationDiscovered.setImageBitmap(circularBitmap)
+                        binding.tvNewLocationDiscovered.text =
+                            "Nueva ubicación descubierta: ${lastLocation.name}"
+
+                        // Preparar vistas
+                        binding.ivNewLocationDiscovered.apply {
+                            alpha = 0f
+                            rotationY = 90f // empieza de perfil, como una moneda
+                            visibility = View.VISIBLE
+                        }
+
+                        binding.tvNewLocationDiscovered.apply {
+                            alpha = 0f
+                            visibility = View.VISIBLE
+                        }
+
+                        // Animación fade in + giro tipo moneda
+                        binding.ivNewLocationDiscovered.animate()
+                            .alpha(1f)
+                            .rotationY(0f)
+                            .setDuration(700)
+                            .setInterpolator(DecelerateInterpolator())
+                            .start()
+
+                        binding.tvNewLocationDiscovered.animate()
+                            .alpha(1f)
+                            .setDuration(700)
+                            .withEndAction {
+                                // Esperar 5 segundos
+                                viewLifecycleOwner.lifecycleScope.launch {
+                                    delay(5000)
+
+                                    // Animación de salida (fade out + giro inverso)
+                                    binding.ivNewLocationDiscovered.animate()
+                                        .alpha(0f)
+                                        .rotationY(-90f)
+                                        .setDuration(700)
+                                        .setInterpolator(AccelerateInterpolator())
+                                        .withEndAction {
+                                            binding.ivNewLocationDiscovered.visibility = View.GONE
+                                            binding.ivNewLocationDiscovered.rotationY =
+                                                90f // reset para próxima vez
+                                        }
+                                        .start()
+
+                                    binding.tvNewLocationDiscovered.animate()
+                                        .alpha(0f)
+                                        .setDuration(500)
+                                        .withEndAction {
+                                            binding.tvNewLocationDiscovered.visibility = View.GONE
+                                        }
+                                        .start()
+                                }
+                            }
+                            .start()
+                    }
+                }
+            }
+        }
 
 
 
@@ -372,48 +507,44 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
 
     private fun createCircularBitmapFromBitmap(
         bitmap: Bitmap,
+        targetSize: Int = 200, // Tamaño fijo para todas las imágenes
         borderColor: Int = Color.rgb(144, 74, 69), // #904A45
         borderWidth: Float = 4f
     ): Bitmap {
-        // Apply a scaling factor to make the icon smaller
-        val scaleFactor = 0.11f // 10% of original size
-
-        val originalSize = min(bitmap.width, bitmap.height)
-        val size = (originalSize * scaleFactor).toInt()
-        val output = createBitmap(size, size)
+        val output = createBitmap(targetSize, targetSize)
         val canvas = Canvas(output)
 
-        // Create paint for the border
+        // Crear pintura para el borde
         val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG)
         borderPaint.color = borderColor
         borderPaint.style = Paint.Style.STROKE
         borderPaint.strokeWidth = borderWidth
 
-        // Create paint for the image
+        // Crear pintura para la imagen
         val imagePaint = Paint(Paint.ANTI_ALIAS_FLAG)
         val shader = BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
 
-        // Scale the bitmap to fit the smaller output
+        // Redimensionar la imagen para ajustarse al tamaño fijo
         val matrix = Matrix()
-        val scale = size / bitmap.width.toFloat()
+        val scale = targetSize / bitmap.width.toFloat()
         matrix.setScale(scale, scale)
 
-        // Center if not square
+        // Centrar la imagen si no es cuadrada
         if (bitmap.width != bitmap.height) {
             matrix.postTranslate(
-                (size - bitmap.width * scale) / 2f,
-                (size - bitmap.height * scale) / 2f
+                (targetSize - bitmap.width * scale) / 2f,
+                (targetSize - bitmap.height * scale) / 2f
             )
         }
 
         shader.setLocalMatrix(matrix)
         imagePaint.shader = shader
 
-        val radius = (size / 2f) - (borderWidth / 2f)
-        // Draw the circular image
-        canvas.drawCircle(size / 2f, size / 2f, radius, imagePaint)
-        // Draw the border
-        canvas.drawCircle(size / 2f, size / 2f, radius, borderPaint)
+        val radius = (targetSize / 2f) - (borderWidth / 2f)
+        // Dibujar la imagen circular
+        canvas.drawCircle(targetSize / 2f, targetSize / 2f, radius, imagePaint)
+        // Dibujar el borde
+        canvas.drawCircle(targetSize / 2f, targetSize / 2f, radius, borderPaint)
 
         return output
     }
