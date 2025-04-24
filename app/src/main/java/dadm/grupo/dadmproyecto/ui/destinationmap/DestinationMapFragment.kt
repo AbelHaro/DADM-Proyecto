@@ -1,11 +1,20 @@
 package dadm.grupo.dadmproyecto.ui.destinationmap
 
 import android.annotation.SuppressLint
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.BitmapShader
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Matrix
+import android.graphics.Paint
+import android.graphics.Shader
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.graphics.createBitmap
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -14,10 +23,14 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import dadm.grupo.dadmproyecto.databinding.FragmentDestinationMapBinding
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.maplibre.android.MapLibre
 import org.maplibre.android.WellKnownTileServer
+import org.maplibre.android.annotations.IconFactory
 import org.maplibre.android.annotations.MarkerOptions
+import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.location.LocationComponentActivationOptions
 import org.maplibre.android.location.LocationComponentOptions
 import org.maplibre.android.location.engine.LocationEngineRequest
@@ -26,6 +39,10 @@ import org.maplibre.android.location.modes.RenderMode
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.OnMapReadyCallback
 import org.maplibre.android.maps.Style
+import java.net.URL
+import javax.net.ssl.HttpsURLConnection
+import kotlin.math.min
+
 
 @AndroidEntryPoint
 class DestinationMapFragment : Fragment(), OnMapReadyCallback {
@@ -81,27 +98,12 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
             } else {
                 Log.d("DestinationMapFragment", "Location permissions not granted")
             }
-
-            // Agrega un marcador en la posición de la UPV
-            viewModel.markers.value.forEach { marker ->
-                val latLng = org.maplibre.android.geometry.LatLng(
-                    marker.latitude,
-                    marker.longitude
-                )
-
-                val markerOptions = MarkerOptions()
-                    .snippet("Marker")
-                    .position(latLng)
-                    .title(marker.name)
-                Log.d("DestinationMapFragment", "Adding marker at: $latLng")
-                mapLibreMap.addMarker(markerOptions)
-            }
         }
 
         // Configura la posición de la cámara en el mapa
         mapLibreMap.cameraPosition = org.maplibre.android.camera.CameraPosition.Builder()
             .target(
-                org.maplibre.android.geometry.LatLng(
+                LatLng(
                     viewModel.upvPosition.latitude,
                     viewModel.upvPosition.longitude
                 )
@@ -116,13 +118,13 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
         mapLibreMap.setMaxZoomPreference(MAP_MAX_ZOOM)
         val boundsBuilder = org.maplibre.android.geometry.LatLngBounds.Builder()
             .include(
-                org.maplibre.android.geometry.LatLng(
+                LatLng(
                     viewModel.upvPosition.latitude + MAP_LATITUDE_OFFSET,
                     viewModel.upvPosition.longitude + MAP_LONGITUDE_OFFSET
                 )
             )
             .include(
-                org.maplibre.android.geometry.LatLng(
+                LatLng(
                     viewModel.upvPosition.latitude - MAP_LATITUDE_OFFSET,
                     viewModel.upvPosition.longitude - MAP_LONGITUDE_OFFSET
                 )
@@ -204,24 +206,40 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
 
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.markers.collect { markers ->
+                viewModel.visitedLocations.collect { visitedLocations ->
                     mapLibreMap?.removeAnnotations()
-                    markers.forEach { marker ->
-                        val latLng = org.maplibre.android.geometry.LatLng(
-                            marker.latitude,
-                            marker.longitude
-                        )
 
-                        val markerOptions = MarkerOptions()
-                            .snippet("Marker")
-                            .position(latLng)
-                            .title(marker.name)
-                        Log.d("DestinationMapFragment", "Adding marker at: $latLng")
-                        mapLibreMap?.addMarker(markerOptions)
+                    visitedLocations.forEach { visitedLocation ->
+                        val latLng = LatLng(visitedLocation.latitude, visitedLocation.longitude)
+
+                        // Llamamos a la función que descarga la imagen
+                        val imageUrl =
+                            "https://idzjjzlrreqfcnakfolk.supabase.co/storage/v1/object/public/images//etsinf.jpg"
+                        val bitmap = loadBitmapFromUrl(imageUrl)
+
+                        bitmap?.let {
+                            val circularBitmap = createCircularBitmapFromBitmap(it)
+                            val iconFactory = IconFactory.getInstance(requireContext())
+                            val icon = iconFactory.fromBitmap(circularBitmap)
+
+                            val markerOptions = MarkerOptions()
+                                .snippet(visitedLocation.description)
+                                .position(latLng)
+                                .title(visitedLocation.name)
+                                .icon(icon)
+
+                            mapLibreMap?.addMarker(markerOptions)
+                        }
                     }
                 }
             }
         }
+
+
+
+
+
+
 
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -262,7 +280,7 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
                     viewModel.getAccurateLocationUpdates().collect { location ->
                         Log.d("DestinationMapFragment", "Location updated: $location")
                         location?.let {
-                            val currentLatLng = org.maplibre.android.geometry.LatLng(
+                            val currentLatLng = LatLng(
                                 it.latitude,
                                 it.longitude
                             )
@@ -349,6 +367,69 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
         binding.mapView.onDestroy()
         _binding = null
         mapLibreMap = null
+    }
+
+
+    private fun createCircularBitmapFromBitmap(
+        bitmap: Bitmap,
+        borderColor: Int = Color.rgb(144, 74, 69), // #904A45
+        borderWidth: Float = 4f
+    ): Bitmap {
+        // Apply a scaling factor to make the icon smaller
+        val scaleFactor = 0.11f // 10% of original size
+
+        val originalSize = min(bitmap.width, bitmap.height)
+        val size = (originalSize * scaleFactor).toInt()
+        val output = createBitmap(size, size)
+        val canvas = Canvas(output)
+
+        // Create paint for the border
+        val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+        borderPaint.color = borderColor
+        borderPaint.style = Paint.Style.STROKE
+        borderPaint.strokeWidth = borderWidth
+
+        // Create paint for the image
+        val imagePaint = Paint(Paint.ANTI_ALIAS_FLAG)
+        val shader = BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
+
+        // Scale the bitmap to fit the smaller output
+        val matrix = Matrix()
+        val scale = size / bitmap.width.toFloat()
+        matrix.setScale(scale, scale)
+
+        // Center if not square
+        if (bitmap.width != bitmap.height) {
+            matrix.postTranslate(
+                (size - bitmap.width * scale) / 2f,
+                (size - bitmap.height * scale) / 2f
+            )
+        }
+
+        shader.setLocalMatrix(matrix)
+        imagePaint.shader = shader
+
+        val radius = (size / 2f) - (borderWidth / 2f)
+        // Draw the circular image
+        canvas.drawCircle(size / 2f, size / 2f, radius, imagePaint)
+        // Draw the border
+        canvas.drawCircle(size / 2f, size / 2f, radius, borderPaint)
+
+        return output
+    }
+
+    suspend fun loadBitmapFromUrl(imageUrl: String): Bitmap? = withContext(Dispatchers.IO) {
+        try {
+            val url = URL(imageUrl)
+            val connection = url.openConnection() as HttpsURLConnection
+            connection.doInput = true
+            connection.connect()
+            val inputStream = connection.inputStream
+            BitmapFactory.decodeStream(inputStream)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
     }
 
 

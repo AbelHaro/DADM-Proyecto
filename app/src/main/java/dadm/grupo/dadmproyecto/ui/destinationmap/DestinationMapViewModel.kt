@@ -12,8 +12,6 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.android.gms.common.ConnectionResult
-import com.google.android.gms.common.GoogleApiAvailability
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingClient
 import com.google.android.gms.location.GeofencingRequest
@@ -47,10 +45,19 @@ class DestinationMapViewModel @Inject constructor(
 ) : ViewModel() {
     val upvPosition = LatLng(UPV_POSITION_LATITUDE, UPV_POSITION_LONGITUDE)
 
-    private val _markers =
+    private val _visitedLocations =
         MutableStateFlow(emptyList<dadm.grupo.dadmproyecto.domain.model.Location>())
-    val markers: StateFlow<List<dadm.grupo.dadmproyecto.domain.model.Location>> =
-        _markers.asStateFlow()
+    val visitedLocations: StateFlow<List<dadm.grupo.dadmproyecto.domain.model.Location>> =
+        _visitedLocations.asStateFlow()
+
+    private val _allLoctions =
+        MutableStateFlow(emptyList<dadm.grupo.dadmproyecto.domain.model.Location>())
+
+    private val _notVisitedLocations =
+        MutableStateFlow(emptyList<dadm.grupo.dadmproyecto.domain.model.Location>())
+
+    private val _lastDiscoveredLocationId =
+        MutableStateFlow<Long?>(null)
 
     private val _mapStyle = MutableStateFlow(loadJsonFromFile(context, STANDARD_MAP_STYLE))
     val mapStyle: StateFlow<String> = _mapStyle.asStateFlow()
@@ -80,17 +87,44 @@ class DestinationMapViewModel @Inject constructor(
 
 
     init {
-
-        val resultCode = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(context)
-
-        Log.d("GooglePlay", " Servicios de Google Play: ${resultCode == ConnectionResult.SUCCESS}")
-
         viewModelScope.launch {
             Log.d("DestinationMapViewModel", "Fetching locations from repository")
-            _markers.value = locationRepository.getLocations()
-            Log.d("DestinationMapViewModel", "Locations fetched: ${_markers.value}")
-            createGeofencesFromLocations(_markers.value)
-            Log.d("DestinationMapViewModel", "Geofences created: $geofenceList")
+            _allLoctions.value = locationRepository.getLocations()
+            Log.d("DestinationMapViewModel", "Locations fetched: ${_allLoctions.value}")
+
+            val userId = authRepository.getCurrentUser()?.id
+
+            Log.d("DestinationMapViewModel", "User ID: $userId")
+
+            if (userId != null) {
+                _visitedLocations.value = locationRepository.getMyLocationsVisited(userId)
+                Log.d(
+                    "DestinationMapViewModel",
+                    "Visited locations fetched: ${_visitedLocations.value}"
+                )
+
+
+                val visitedLocationIds = _visitedLocations.value.map { it.id }
+
+                _notVisitedLocations.value = _allLoctions.value.filter { location ->
+                    !visitedLocationIds.contains(location.id)
+                }
+
+                Log.d(
+                    "DestinationMapViewModel",
+                    "Not visited locations: ${_notVisitedLocations.value}"
+                )
+            } else {
+                Log.d("DestinationMapViewModel", "User ID is null")
+            }
+
+            if (_notVisitedLocations.value.isNotEmpty()) {
+                createGeofencesFromLocations(_notVisitedLocations.value)
+                Log.d("DestinationMapViewModel", "Geofences created for not visited locations")
+            } else {
+                createGeofencesFromLocations(_allLoctions.value)
+                Log.d("DestinationMapViewModel", "Geofences created for all locations")
+            }
         }
 
         viewModelScope.launch {
@@ -98,6 +132,22 @@ class DestinationMapViewModel @Inject constructor(
             currentUser?.id?.let { userId ->
                 val myLocationsVisited = locationRepository.getMyLocationsVisited(userId)
                 Log.d("DestinationMapViewModel", "My locations visited: $myLocationsVisited")
+            }
+        }
+
+        viewModelScope.launch {
+            GeofenceEventChannel.geofenceEvents.collect { locationId ->
+                Log.d(
+                    "DestinationMapViewModel",
+                    "Geofence event triggered for location ID: $locationId"
+                )
+                _lastDiscoveredLocationId.value = locationId
+                val location = _allLoctions.value.find { it.id == locationId }
+
+                _visitedLocations.value += (location ?: return@collect)
+
+                _notVisitedLocations.value =
+                    _notVisitedLocations.value.filter { it.id != locationId }
             }
         }
     }

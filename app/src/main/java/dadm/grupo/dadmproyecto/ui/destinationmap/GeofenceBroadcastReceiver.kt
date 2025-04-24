@@ -8,12 +8,13 @@ import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofenceStatusCodes
 import com.google.android.gms.location.GeofencingEvent
 import dadm.grupo.dadmproyecto.data.auth.AuthRepository
-import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
 import dadm.grupo.dadmproyecto.data.db.LocationsVisitedRepository
+import dadm.grupo.dadmproyecto.ui.destinationmap.GeofenceEventChannel
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class GeofenceBroadcastReceiver : BroadcastReceiver() {
@@ -60,8 +61,10 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
                         userInfo.id,
                         locationId.toLong()
                     )
+
+                    GeofenceEventChannel.triggerGeofenceEvent(locationId.toLong())
                 }
-                
+
                 GeofenceHelper.showLocationNotification(context, locationId)
             }
         }
