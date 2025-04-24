@@ -124,13 +124,9 @@ class DestinationMapViewModel @Inject constructor(
                 Log.d("DestinationMapViewModel", "User ID is null")
             }
 
-            if (_notVisitedLocations.value.isNotEmpty()) {
-                createGeofencesFromLocations(_notVisitedLocations.value)
-                Log.d("DestinationMapViewModel", "Geofences created for not visited locations")
-            } else {
-                createGeofencesFromLocations(_allLoctions.value)
-                Log.d("DestinationMapViewModel", "Geofences created for all locations")
-            }
+            createGeofencesFromLocations(_notVisitedLocations.value)
+            Log.d("DestinationMapViewModel", "Geofences created for not visited locations")
+
         }
 
         viewModelScope.launch {

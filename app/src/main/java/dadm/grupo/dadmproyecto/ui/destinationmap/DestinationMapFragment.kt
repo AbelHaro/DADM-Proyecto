@@ -1,6 +1,8 @@
 package dadm.grupo.dadmproyecto.ui.destinationmap
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.util.Log
@@ -9,6 +11,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AccelerateInterpolator
 import android.view.animation.DecelerateInterpolator
+import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -27,6 +30,7 @@ import org.maplibre.android.annotations.IconFactory
 import org.maplibre.android.annotations.Marker
 import org.maplibre.android.annotations.MarkerOptions
 import org.maplibre.android.geometry.LatLng
+import org.maplibre.android.location.LocationComponent
 import org.maplibre.android.location.LocationComponentActivationOptions
 import org.maplibre.android.location.LocationComponentOptions
 import org.maplibre.android.location.engine.LocationEngineRequest
@@ -70,81 +74,104 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
     @SuppressLint("MissingPermission")
     override fun onMapReady(mapLibreMap: MapLibreMap) {
         this.mapLibreMap = mapLibreMap
-        mapLibreMap.setStyle(
-            Style.Builder().fromJson(viewModel.mapStyle.value) // Establece el estilo del mapa
-        ) { style ->
+        setupMapStyle(mapLibreMap)
+        setupCameraAndBounds(mapLibreMap)
+    }
 
-            val locationComponent = mapLibreMap.locationComponent
 
+    private fun setupMapStyle(map: MapLibreMap) {
+        map.setStyle(Style.Builder().fromJson(viewModel.mapStyle.value)) { style ->
             if (viewModel.isLocationPermissionGranted.value) {
-                val locationComponentOptions = LocationComponentOptions.builder(requireContext())
-                    .pulseEnabled(true)
-                    .build()
-
-                val locationComponentActivationOptions =
-                    buildLocationComponentActivationOptions(style, locationComponentOptions)
-
-                locationComponent.activateLocationComponent(locationComponentActivationOptions)
-                locationComponent.isLocationComponentEnabled = true
-                locationComponent.cameraMode = CameraMode.TRACKING
-                locationComponent.renderMode = RenderMode.COMPASS
+                enableLocationComponent(map.locationComponent, style)
             } else {
                 Log.d("DestinationMapFragment", "Location permissions not granted")
             }
         }
-
-        // Configura la posición de la cámara en el mapa
-        mapLibreMap.cameraPosition = org.maplibre.android.camera.CameraPosition.Builder()
-            .target(
-                LatLng(
-                    viewModel.upvPosition.latitude,
-                    viewModel.upvPosition.longitude
-                )
-            )
-            .zoom(MAP_ZOOM_LEVEL) // Establece el nivel de zoom
-            .bearing(MAP_BEARING_ANGLE) // Dirección de la cámara
-            .tilt(MAP_TILT_ANGLE) // Inclinación de la cámara
-            .build()
-
-        // Establece los límites de zoom y el área visible
-        mapLibreMap.setMinZoomPreference(MAP_MIN_ZOOM)
-        mapLibreMap.setMaxZoomPreference(MAP_MAX_ZOOM)
-        val boundsBuilder = org.maplibre.android.geometry.LatLngBounds.Builder()
-            .include(
-                LatLng(
-                    viewModel.upvPosition.latitude + MAP_LATITUDE_OFFSET,
-                    viewModel.upvPosition.longitude + MAP_LONGITUDE_OFFSET
-                )
-            )
-            .include(
-                LatLng(
-                    viewModel.upvPosition.latitude - MAP_LATITUDE_OFFSET,
-                    viewModel.upvPosition.longitude - MAP_LONGITUDE_OFFSET
-                )
-            )
-        mapLibreMap.setLatLngBoundsForCameraTarget(boundsBuilder.build()) // Define los límites del mapa
     }
 
-    // Función para construir las opciones de activación del LocationComponent
+    private fun setupCameraAndBounds(map: MapLibreMap) {
+        val upvLat = viewModel.upvPosition.latitude
+        val upvLng = viewModel.upvPosition.longitude
+
+        map.cameraPosition = org.maplibre.android.camera.CameraPosition.Builder()
+            .target(LatLng(upvLat, upvLng))
+            .zoom(MAP_ZOOM_LEVEL)
+            .bearing(MAP_BEARING_ANGLE)
+            .tilt(MAP_TILT_ANGLE)
+            .build()
+
+        map.setMinZoomPreference(MAP_MIN_ZOOM)
+        map.setMaxZoomPreference(MAP_MAX_ZOOM)
+
+        val boundsBuilder = org.maplibre.android.geometry.LatLngBounds.Builder()
+            .include(LatLng(upvLat + MAP_LATITUDE_OFFSET, upvLng + MAP_LONGITUDE_OFFSET))
+            .include(LatLng(upvLat - MAP_LATITUDE_OFFSET, upvLng - MAP_LONGITUDE_OFFSET))
+
+        map.setLatLngBoundsForCameraTarget(boundsBuilder.build())
+    }
+
+    private fun enableLocationComponent(component: LocationComponent, style: Style) {
+        val options = LocationComponentOptions.builder(requireContext())
+            .pulseEnabled(true)
+            .build()
+
+        val activationOptions = buildLocationComponentActivationOptions(style, options)
+        component.activateLocationComponent(activationOptions)
+
+        if (ActivityCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            // Safe to enable the component as we've checked permissions
+            component.isLocationComponentEnabled = true
+            component.cameraMode = CameraMode.TRACKING
+            component.renderMode = RenderMode.COMPASS
+        }
+    }
+
     private fun buildLocationComponentActivationOptions(
         style: Style,
         locationComponentOptions: LocationComponentOptions
     ): LocationComponentActivationOptions {
-        return LocationComponentActivationOptions
-            .builder(requireContext(), style)
+        return LocationComponentActivationOptions.builder(requireContext(), style)
             .locationComponentOptions(locationComponentOptions)
-            .useDefaultLocationEngine(true) // Usa el motor de ubicación predeterminado
+            .useDefaultLocationEngine(true)
             .locationEngineRequest(
                 LocationEngineRequest.Builder(750)
-                    .setFastestInterval(750) // Intervalo más rápido para obtener ubicación
-                    .setPriority(LocationEngineRequest.PRIORITY_HIGH_ACCURACY) // Alta precisión
+                    .setFastestInterval(750)
+                    .setPriority(LocationEngineRequest.PRIORITY_HIGH_ACCURACY)
                     .build()
             )
             .build()
     }
 
-    // Observa los eventos de navegación desde el ViewModel
+
     private fun observeNavigationEvents() {
+        observeFabMenuState()
+        observeMapStyle()
+        observeLocationPermission()
+        observeVisitedLocations()
+        observeLastDiscoveredLocation()
+        observeAccurateLocationUpdates()
+
+        setupFabAnimations()
+
+        binding.fabMain.setOnClickListener { viewModel.toggleFabMenu() }
+        binding.fabStyleStandard.setOnClickListener {
+            viewModel.changeMapStyle(STANDARD_MAP_STYLE)
+            viewModel.toggleFabMenu()
+        }
+        binding.fabStyleSatellite.setOnClickListener {
+            viewModel.changeMapStyle(SATELLITE_MAP_STYLE)
+            viewModel.toggleFabMenu()
+        }
+    }
+
+    private fun observeFabMenuState() {
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.isFabMenuOpenState.collect { isMenuOpen ->
@@ -152,271 +179,234 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
                         if (isMenuOpen) View.VISIBLE else View.INVISIBLE
                     binding.fabStyleSatellite.visibility =
                         if (isMenuOpen) View.VISIBLE else View.INVISIBLE
-                }
-            }
-        }
-
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.mapStyle.collect { style ->
-                    mapLibreMap?.setStyle(
-                        Style.Builder().fromJson(style)
-                    )
-                }
-            }
-        }
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.isLocationPermissionGranted.collect { isGranted ->
-                    if (isGranted) {
-                        binding.mapView.getMapAsync @androidx.annotation.RequiresPermission(allOf = [android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION]) { map ->
-                            val locationComponent = map.locationComponent
-                            val locationComponentOptions =
-                                LocationComponentOptions.builder(requireContext())
-                                    .pulseEnabled(true)
-                                    .build()
-
-                            val locationComponentActivationOptions =
-                                buildLocationComponentActivationOptions(
-                                    map.style!!,
-                                    locationComponentOptions
-                                )
-
-                            locationComponent.activateLocationComponent(
-                                locationComponentActivationOptions
-                            )
-                            locationComponent.isLocationComponentEnabled = true
-                        }
-                    } else {
-                        Log.d("DestinationMapFragment", "Location permissions not granted")
-                    }
-
-                }
-            }
-        }
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                val markerOriginalBitmaps = mutableMapOf<Marker, Bitmap>()
-                var selectedMarker: Marker?
-
-                viewModel.visitedLocations.collect { visitedLocations ->
-                    mapLibreMap?.removeAnnotations()
-                    markerOriginalBitmaps.clear()
-                    selectedMarker = null
-
-                    visitedLocations.forEach { visitedLocation ->
-                        val latLng = LatLng(visitedLocation.latitude, visitedLocation.longitude)
-
-                        // Cargar la imagen desde la URL
-                        val bitmap = loadBitmapFromUrl(visitedLocation.imageUrl)
-
-                        bitmap?.let {
-                            // Redimensionar la imagen a un tamaño fijo de 200x200 píxeles
-                            val circularBitmap =
-                                createCircularBitmapFromBitmap(it, targetSize = 125) // Tamaño fijo
-                            val iconFactory = IconFactory.getInstance(requireContext())
-                            val icon = iconFactory.fromBitmap(circularBitmap)
-
-                            val markerOptions = MarkerOptions()
-                                .position(latLng)
-                                .title(visitedLocation.name)
-                                .snippet(visitedLocation.description)
-                                .icon(icon)
-
-                            val marker = mapLibreMap?.addMarker(markerOptions)
-                            marker?.let { m ->
-                                markerOriginalBitmaps[m] = circularBitmap
-                            }
-                        }
-                    }
-
-                    mapLibreMap?.setOnMarkerClickListener { marker ->
-                        if (selectedMarker == marker) {
-                            // Restaurar tamaño original
-                            markerOriginalBitmaps[marker]?.let {
-                                val iconFactory = IconFactory.getInstance(requireContext())
-                                val icon = iconFactory.fromBitmap(it)
-                                marker.icon = icon
-                            }
-                            marker.hideInfoWindow()  // Esconder la InfoWindow
-                            selectedMarker = null
-                        } else {
-                            // Restaurar el marcador anterior
-                            selectedMarker?.let { prevMarker ->
-                                markerOriginalBitmaps[prevMarker]?.let {
-                                    val iconFactory = IconFactory.getInstance(requireContext())
-                                    val icon = iconFactory.fromBitmap(it)
-                                    prevMarker.icon = icon
-                                }
-                                prevMarker.hideInfoWindow()  // Esconder la InfoWindow del anterior
-                            }
-
-                            // Ampliar el nuevo marcador
-                            markerOriginalBitmaps[marker]?.let { originalBitmap ->
-                                val enlargedBitmap =
-                                    createCircularBitmapFromBitmap(
-                                        originalBitmap,
-                                        targetSize = 250
-                                    ) // Tamaño ampliado
-                                val iconFactory = IconFactory.getInstance(requireContext())
-                                val enlargedIcon = iconFactory.fromBitmap(enlargedBitmap)
-                                marker.icon = enlargedIcon
-                            }
-
-                            marker.showInfoWindow(mapLibreMap!!, binding.mapView)
-                            selectedMarker = marker
-                        }
-                        true
-                    }
-
-                    // Esconder la InfoWindow al hacer clic fuera de los marcadores
-                    mapLibreMap?.addOnMapClickListener {
-                        selectedMarker?.let { marker ->
-                            markerOriginalBitmaps[marker]?.let {
-                                val iconFactory = IconFactory.getInstance(requireContext())
-                                val icon = iconFactory.fromBitmap(it)
-                                marker.icon = icon
-                            }
-                            marker.hideInfoWindow()  // Esconder la InfoWindow
-                            selectedMarker = null
-                        }
-                        true
-                    }
-                }
-            }
-        }
-
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.lastDiscoveredLocation.collect { lastLocation ->
-                    if (lastLocation == null) return@collect
-
-                    Log.d("DestinationMapFragment", "Last discovered location: $lastLocation")
-
-                    val bitmap = loadBitmapFromUrl(lastLocation.imageUrl)
-
-                    bitmap?.let {
-                        val circularBitmap = createCircularBitmapFromBitmap(it, targetSize = 600)
-                        binding.ivNewLocationDiscovered.setImageBitmap(circularBitmap)
-                        binding.tvNewLocationDiscovered.text =
-                            "Nueva ubicación descubierta: ${lastLocation.name}"
-
-                        // Preparar vistas
-                        binding.ivNewLocationDiscovered.apply {
-                            alpha = 0f
-                            rotationY = 90f // empieza de perfil, como una moneda
-                            visibility = View.VISIBLE
-                        }
-
-                        binding.tvNewLocationDiscovered.apply {
-                            alpha = 0f
-                            visibility = View.VISIBLE
-                        }
-
-                        // Animación fade in + giro tipo moneda
-                        binding.ivNewLocationDiscovered.animate()
-                            .alpha(1f)
-                            .rotationY(0f)
-                            .setDuration(700)
-                            .setInterpolator(DecelerateInterpolator())
-                            .start()
-
-                        binding.tvNewLocationDiscovered.animate()
-                            .alpha(1f)
-                            .setDuration(700)
-                            .withEndAction {
-                                // Esperar 5 segundos
-                                viewLifecycleOwner.lifecycleScope.launch {
-                                    delay(5000)
-
-                                    // Animación de salida (fade out + giro inverso)
-                                    binding.ivNewLocationDiscovered.animate()
-                                        .alpha(0f)
-                                        .rotationY(-90f)
-                                        .setDuration(700)
-                                        .setInterpolator(AccelerateInterpolator())
-                                        .withEndAction {
-                                            binding.ivNewLocationDiscovered.visibility = View.GONE
-                                            binding.ivNewLocationDiscovered.rotationY =
-                                                90f // reset para próxima vez
-                                        }
-                                        .start()
-
-                                    binding.tvNewLocationDiscovered.animate()
-                                        .alpha(0f)
-                                        .setDuration(500)
-                                        .withEndAction {
-                                            binding.tvNewLocationDiscovered.visibility = View.GONE
-                                        }
-                                        .start()
-                                }
-                            }
-                            .start()
-                    }
-
-                    viewModel.resetLastDiscoveredLocation() // Resetear la ubicación descubierta
-                }
-            }
-        }
-
-
-
-
-
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.isFabMenuOpenState.collect { isMenuOpen ->
                     animateMenuOpen(isMenuOpen)
                 }
             }
         }
+    }
 
+    private fun observeMapStyle() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.mapStyle.collect { style ->
+                    mapLibreMap?.setStyle(Style.Builder().fromJson(style))
+                }
+            }
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun observeLocationPermission() {
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.isLocationPermissionGranted.collect { isGranted ->
                     if (isGranted) {
                         Log.d("DestinationMapFragment", "Location permissions granted")
-                        binding.mapView.getMapAsync @androidx.annotation.RequiresPermission(allOf = [android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION]) { map ->
-                            val locationComponent = map.locationComponent
-                            val locationComponentOptions =
-                                LocationComponentOptions.builder(requireContext())
-                                    .pulseEnabled(true)
-                                    .build()
-
-                            val locationComponentActivationOptions =
-                                buildLocationComponentActivationOptions(
-                                    map.style!!,
-                                    locationComponentOptions
-                                )
-
-                            locationComponent.activateLocationComponent(
-                                locationComponentActivationOptions
-                            )
-                            locationComponent.isLocationComponentEnabled = true
-                        }
+                        setupLocationComponent()
                     } else {
                         Log.d("DestinationMapFragment", "Location permissions not granted")
                     }
+                }
+            }
+        }
+    }
 
-                    // Monitoriza los cambios de posicion para actualizar la UI en tiempo real
-                    viewModel.getAccurateLocationUpdates().collect { location ->
-                        Log.d("DestinationMapFragment", "Location updated: $location")
-                        location?.let {
-                            val currentLatLng = LatLng(
-                                it.latitude,
-                                it.longitude
-                            )
-                            if (mapLibreMap != null) {
-                                mapLibreMap!!.locationComponent.forceLocationUpdate(it)
-                                mapLibreMap!!.animateCamera(
-                                    org.maplibre.android.camera.CameraUpdateFactory.newLatLng(
-                                        currentLatLng
-                                    )
+    @androidx.annotation.RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
+    private fun setupLocationComponent() {
+        binding.mapView.getMapAsync { map ->
+            val locationComponent = map.locationComponent
+            val locationComponentOptions = LocationComponentOptions.builder(requireContext())
+                .pulseEnabled(true)
+                .build()
+
+            val activationOptions =
+                buildLocationComponentActivationOptions(map.style!!, locationComponentOptions)
+
+            locationComponent.activateLocationComponent(activationOptions)
+            locationComponent.isLocationComponentEnabled = true
+        }
+    }
+
+    private val addedLocationIds = mutableSetOf<Long>()
+    private val markerOriginalBitmaps = mutableMapOf<Marker, Bitmap>()
+    private var selectedMarker: Marker? = null
+
+    private fun observeVisitedLocations() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.visitedLocations.collect { visitedLocations ->
+                    // Find only new locations that haven't been added to the map yet
+                    val newLocations = visitedLocations.filter { location ->
+                        !addedLocationIds.contains(location.id)
+                    }
+
+                    Log.d(
+                        "DestinationMapFragment",
+                        "Visited locations: ${visitedLocations.size}, New locations: ${newLocations.size}"
+                    )
+
+
+                    if (newLocations.isNotEmpty()) {
+                        Log.d(
+                            "DestinationMapFragment",
+                            "Adding ${newLocations.size} new visited locations"
+                        )
+
+                        // Add markers only for new locations
+                        newLocations.forEach { location ->
+                            val latLng = LatLng(location.latitude, location.longitude)
+                            loadBitmapFromUrl(location.imageUrl)?.let { bitmap ->
+                                val circularBitmap =
+                                    createCircularBitmapFromBitmap(bitmap, targetSize = 125)
+                                val icon =
+                                    IconFactory.getInstance(requireContext())
+                                        .fromBitmap(circularBitmap)
+
+                                val marker = mapLibreMap?.addMarker(
+                                    MarkerOptions()
+                                        .position(latLng)
+                                        .title(location.name)
+                                        .snippet(location.description)
+                                        .icon(icon)
+                                )
+
+                                marker?.let {
+                                    markerOriginalBitmaps[it] = circularBitmap
+                                    // Track that we've added this location
+                                    addedLocationIds.add(location.id)
+                                }
+                            }
+                        }
+
+                        // Only setup the click listener if we have markers
+                        if (markerOriginalBitmaps.isNotEmpty()) {
+                            setupMarkerClickListener(markerOriginalBitmaps, selectedMarker)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun setupMarkerClickListener(
+        markerBitmaps: MutableMap<Marker, Bitmap>,
+        selected: Marker?
+    ) {
+        var selectedMarker = selected
+
+        mapLibreMap?.setOnMarkerClickListener { marker ->
+            if (selectedMarker == marker) {
+                restoreMarkerIcon(marker, markerBitmaps)
+                marker.hideInfoWindow()
+                selectedMarker = null
+            } else {
+                selectedMarker?.let { marker ->
+                    restoreMarkerIcon(
+                        marker,
+                        markerBitmaps
+                    ).also { marker.hideInfoWindow() }
+                }
+                enlargeMarkerIcon(marker, markerBitmaps)
+                marker.showInfoWindow(mapLibreMap!!, binding.mapView)
+                selectedMarker = marker
+            }
+            true
+        }
+
+        mapLibreMap?.addOnMapClickListener {
+            selectedMarker?.let {
+                restoreMarkerIcon(it, markerBitmaps)
+                it.hideInfoWindow()
+                selectedMarker = null
+            }
+            true
+        }
+    }
+
+    private fun restoreMarkerIcon(marker: Marker, markerBitmaps: Map<Marker, Bitmap>) {
+        markerBitmaps[marker]?.let {
+            val icon = IconFactory.getInstance(requireContext()).fromBitmap(it)
+            marker.icon = icon
+        }
+    }
+
+    private fun enlargeMarkerIcon(marker: Marker, markerBitmaps: Map<Marker, Bitmap>) {
+        markerBitmaps[marker]?.let {
+            val enlargedBitmap = createCircularBitmapFromBitmap(it, targetSize = 250)
+            val icon = IconFactory.getInstance(requireContext()).fromBitmap(enlargedBitmap)
+            marker.icon = icon
+        }
+    }
+
+    private fun observeLastDiscoveredLocation() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.lastDiscoveredLocation.collect { location ->
+                    if (location == null) return@collect
+
+                    Log.d("DestinationMapFragment", "Last discovered location: $location")
+                    loadBitmapFromUrl(location.imageUrl)?.let {
+                        val bitmap = createCircularBitmapFromBitmap(it, targetSize = 600)
+                        showNewLocationDiscovered(location.name, bitmap)
+                    }
+
+                    viewModel.resetLastDiscoveredLocation()
+                }
+            }
+        }
+    }
+
+    private fun showNewLocationDiscovered(name: String, bitmap: Bitmap) {
+        binding.ivNewLocationDiscovered.setImageBitmap(bitmap)
+        binding.tvNewLocationDiscovered.text = "Nueva ubicación descubierta: $name"
+
+        binding.ivNewLocationDiscovered.apply {
+            alpha = 0f
+            rotationY = 90f
+            visibility = View.VISIBLE
+        }
+        binding.tvNewLocationDiscovered.apply {
+            alpha = 0f
+            visibility = View.VISIBLE
+        }
+
+        binding.ivNewLocationDiscovered.animate()
+            .alpha(1f).rotationY(0f).setDuration(700)
+            .setInterpolator(DecelerateInterpolator()).start()
+
+        binding.tvNewLocationDiscovered.animate()
+            .alpha(1f).setDuration(700)
+            .withEndAction {
+                viewLifecycleOwner.lifecycleScope.launch {
+                    delay(5000)
+                    binding.ivNewLocationDiscovered.animate()
+                        .alpha(0f).rotationY(-90f).setDuration(700)
+                        .setInterpolator(AccelerateInterpolator())
+                        .withEndAction {
+                            binding.ivNewLocationDiscovered.visibility = View.GONE
+                            binding.ivNewLocationDiscovered.rotationY = 90f
+                        }
+                        .start()
+                    binding.tvNewLocationDiscovered.animate()
+                        .alpha(0f).setDuration(500)
+                        .withEndAction { binding.tvNewLocationDiscovered.visibility = View.GONE }
+                        .start()
+                }
+            }.start()
+    }
+
+    private fun observeAccurateLocationUpdates() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.isLocationPermissionGranted.collect { isGranted ->
+                    if (isGranted) {
+                        viewModel.getAccurateLocationUpdates().collect { location ->
+                            location?.let {
+                                Log.d("DestinationMapFragment", "Location updated: $it")
+                                val latLng = LatLng(it.latitude, it.longitude)
+                                mapLibreMap?.locationComponent?.forceLocationUpdate(it)
+                                mapLibreMap?.animateCamera(
+                                    org.maplibre.android.camera.CameraUpdateFactory.newLatLng(latLng)
                                 )
                             }
                         }
@@ -424,22 +414,8 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
                 }
             }
         }
-        setupFabAnimations()
-
-        binding.fabMain.setOnClickListener {
-            viewModel.toggleFabMenu()
-        }
-
-        binding.fabStyleStandard.setOnClickListener {
-            viewModel.changeMapStyle(STANDARD_MAP_STYLE)
-            viewModel.toggleFabMenu()
-        }
-
-        binding.fabStyleSatellite.setOnClickListener {
-            viewModel.changeMapStyle(SATELLITE_MAP_STYLE)
-            viewModel.toggleFabMenu()
-        }
     }
+
 
     override fun onStart() {
         super.onStart()
@@ -453,7 +429,7 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
         viewModel.checkLocationPermission()
 
         if (viewModel.isLocationPermissionGranted.value) {
-            binding.mapView.getMapAsync @androidx.annotation.RequiresPermission(allOf = [android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION]) { map ->
+            binding.mapView.getMapAsync @androidx.annotation.RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION]) { map ->
                 val locationComponent = map.locationComponent
                 val locationComponentOptions = LocationComponentOptions.builder(requireContext())
                     .pulseEnabled(true)
@@ -464,7 +440,6 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
 
                 locationComponent.activateLocationComponent(locationComponentActivationOptions)
                 locationComponent.isLocationComponentEnabled = true
-                //locationComponent.cameraMode = CameraMode.TRACKING
             }
         }
     }
@@ -492,6 +467,9 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
     override fun onDestroyView() {
         super.onDestroyView()
         binding.mapView.onDestroy()
+        addedLocationIds.clear()
+        markerOriginalBitmaps.clear()
+        selectedMarker = null
         _binding = null
         mapLibreMap = null
     }
