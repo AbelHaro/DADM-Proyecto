@@ -25,6 +25,19 @@ class LocationsVisitedSupabaseImpl @Inject constructor(
             .decodeList<LocationVisited>()
     }
 
+    override suspend fun insertLocationVisited(
+        userId: String,
+        locationId: Long
+    ): Boolean {
+        return try {
+            supabaseClient.from("locations_visited")
+                .insert(LocationVisited(userId, locationId))
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
     override suspend fun getUsersOrderedByLocationsVisited(): List<UserVisitCount> = runBlocking {
         val visits = supabaseClient.from("locations_visited")
             .select(Columns.raw("user_id, location_id, created_at, users(display_name)"))
