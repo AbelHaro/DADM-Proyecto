@@ -35,8 +35,16 @@ class AuthActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        checkLoginStatus()
+        lifecycleScope.launch {
+            checkLoginStatus()
+        }.also {
+            it.invokeOnCompletion {
+                setupUI()
+            }
+        }
+    }
 
+    private fun setupUI() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         binding = ActivityAuthBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -63,15 +71,15 @@ class AuthActivity : AppCompatActivity() {
         }
     }
 
-    private fun checkLoginStatus() {
-        lifecycleScope.launch {
-            try {
-                if (authRepository.isUserLoggedIn()) {
-                    redirectToMain()
-                }
-            } catch (e: Exception) {
-                Log.e("AuthActivity", "Error checking login status: ${e.message}")
+    private suspend fun checkLoginStatus() {
+
+        try {
+            if (authRepository.isUserLoggedIn()) {
+                redirectToMain()
             }
+        } catch (e: Exception) {
+            Log.e("AuthActivity", "Error checking login status: ${e.message}")
+
         }
     }
 
@@ -88,7 +96,9 @@ class AuthActivity : AppCompatActivity() {
                     if (!hasBackgroundLocationPermission(this)) {
                         requestBackgroundLocationPermission(this)
                     } else {
-                        checkLoginStatus()
+                        lifecycleScope.launch {
+                            checkLoginStatus()
+                        }
                     }
                 } else {
                     showPermissionDeniedDialog()
@@ -97,7 +107,9 @@ class AuthActivity : AppCompatActivity() {
 
             1002 -> { // Background location permission
                 if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    checkLoginStatus()
+                    lifecycleScope.launch {
+                        checkLoginStatus()
+                    }
                 } else {
                     showPermissionDeniedDialog()
                 }

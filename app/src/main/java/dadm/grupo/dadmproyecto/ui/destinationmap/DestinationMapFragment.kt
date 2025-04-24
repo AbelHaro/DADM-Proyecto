@@ -2,13 +2,6 @@ package dadm.grupo.dadmproyecto.ui.destinationmap
 
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.BitmapShader
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Matrix
-import android.graphics.Paint
-import android.graphics.Shader
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -16,7 +9,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AccelerateInterpolator
 import android.view.animation.DecelerateInterpolator
-import androidx.core.graphics.createBitmap
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -24,11 +16,11 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import dadm.grupo.dadmproyecto.databinding.FragmentDestinationMapBinding
+import dadm.grupo.dadmproyecto.utils.LoadImageUtils.createCircularBitmapFromBitmap
+import dadm.grupo.dadmproyecto.utils.LoadImageUtils.loadBitmapFromUrl
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.maplibre.android.MapLibre
 import org.maplibre.android.WellKnownTileServer
 import org.maplibre.android.annotations.IconFactory
@@ -43,8 +35,6 @@ import org.maplibre.android.location.modes.RenderMode
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.OnMapReadyCallback
 import org.maplibre.android.maps.Style
-import java.net.URL
-import javax.net.ssl.HttpsURLConnection
 
 
 @AndroidEntryPoint
@@ -506,67 +496,6 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
         mapLibreMap = null
     }
 
-
-    private fun createCircularBitmapFromBitmap(
-        bitmap: Bitmap,
-        targetSize: Int = 200, // Tamaño fijo para todas las imágenes
-        borderColor: Int = Color.rgb(144, 74, 69), // #904A45
-        borderWidth: Float = 4f
-    ): Bitmap {
-        val output = createBitmap(targetSize, targetSize)
-        val canvas = Canvas(output)
-
-        // Crear pintura para el borde
-        val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG)
-        borderPaint.color = borderColor
-        borderPaint.style = Paint.Style.STROKE
-        borderPaint.strokeWidth = borderWidth
-
-        // Crear pintura para la imagen
-        val imagePaint = Paint(Paint.ANTI_ALIAS_FLAG)
-        val shader = BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
-
-        // Redimensionar la imagen para ajustarse al tamaño fijo
-        val matrix = Matrix()
-        val scale = targetSize / bitmap.width.toFloat()
-        matrix.setScale(scale, scale)
-
-        // Centrar la imagen si no es cuadrada
-        if (bitmap.width != bitmap.height) {
-            matrix.postTranslate(
-                (targetSize - bitmap.width * scale) / 2f,
-                (targetSize - bitmap.height * scale) / 2f
-            )
-        }
-
-        shader.setLocalMatrix(matrix)
-        imagePaint.shader = shader
-
-        val radius = (targetSize / 2f) - (borderWidth / 2f)
-        // Dibujar la imagen circular
-        canvas.drawCircle(targetSize / 2f, targetSize / 2f, radius, imagePaint)
-        // Dibujar el borde
-        canvas.drawCircle(targetSize / 2f, targetSize / 2f, radius, borderPaint)
-
-        return output
-    }
-
-    suspend fun loadBitmapFromUrl(imageUrl: String): Bitmap? = withContext(Dispatchers.IO) {
-        try {
-            val url = URL(imageUrl)
-            val connection = url.openConnection() as HttpsURLConnection
-            connection.doInput = true
-            connection.connect()
-            val inputStream = connection.inputStream
-            BitmapFactory.decodeStream(inputStream)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
-        }
-    }
-
-
-    // In DestinationMapFragment.kt
 
     private fun setupFabAnimations() {
         // Setup click listeners with animations
