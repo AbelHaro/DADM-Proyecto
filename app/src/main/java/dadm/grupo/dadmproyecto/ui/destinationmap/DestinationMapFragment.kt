@@ -321,6 +321,16 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
             }
             true
         }
+
+        mapLibreMap?.addOnCameraMoveListener {
+            selectedMarker?.let { marker ->
+                if (marker.isInfoWindowShown) {
+                    // Refresh the info window position
+                    marker.hideInfoWindow()
+                    marker.showInfoWindow(mapLibreMap!!, binding.mapView)
+                }
+            }
+        }
     }
 
     private fun restoreMarkerIcon(marker: Marker, markerBitmaps: Map<Marker, Bitmap>) {
