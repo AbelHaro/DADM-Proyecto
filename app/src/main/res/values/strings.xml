@@ -36,4 +36,8 @@
     <string name="location_permission_title"> Location Permission Required</string>
     <string name="location_permission_message">Location permission is required to access your location. Please enable it in the app settings.</string>
     <string name="go_to_settings">Go to Settings</string>
+    <string name="current_user_position">Your position: %d</string>
+    <string name="trophy_icon">Trophy Icon</string>
+    <string name="logout">Logout</string>
+    <string name="user_not_ranked">You are not ranked yet</string>
 </resources>
