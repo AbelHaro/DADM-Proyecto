@@ -19,10 +19,4 @@ abstract class LocationBinderModule {
     abstract fun bindLocationRepository(
         impl: LocationsRepositorySupabaseImpl
     ): LocationsRepository
-
-    @Binds
-    @Singleton
-    abstract fun bindLocationsVisitedRepository(
-        impl: LocationsVisitedSupabaseImpl
-    ): LocationsVisitedRepository
 }

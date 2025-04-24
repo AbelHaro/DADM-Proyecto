@@ -162,6 +162,11 @@ class DestinationMapViewModel @Inject constructor(
         }
     }
 
+
+    fun resetLastDiscoveredLocation() {
+        _lastDiscoveredLocation.value = null
+    }
+
     fun toggleFabMenu() {
         isFabMenuOpen.value = !isFabMenuOpen.value
     }

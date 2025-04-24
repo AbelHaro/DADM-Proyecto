@@ -367,6 +367,8 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
                             }
                             .start()
                     }
+
+                    viewModel.resetLastDiscoveredLocation() // Resetear la ubicación descubierta
                 }
             }
         }
