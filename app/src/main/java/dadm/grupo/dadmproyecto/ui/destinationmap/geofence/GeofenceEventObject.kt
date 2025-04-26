@@ -1,4 +1,4 @@
-package dadm.grupo.dadmproyecto.ui.destinationmap
+package dadm.grupo.dadmproyecto.ui.destinationmap.geofence
 
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow

@@ -1,6 +1,9 @@
 package dadm.grupo.dadmproyecto.ui.destinationmap
 
 import android.Manifest
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
+import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
@@ -632,6 +635,24 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
     }
 
     private fun animateMenuOpen(isOpen: Boolean) {
+        val iconResource = if (isOpen) R.drawable.icon_plus_45 else R.drawable.icon_plus
+
+        val fadeOut = ObjectAnimator.ofFloat(binding.fabMain, "alpha", 1f, 0f)
+        fadeOut.duration = 100
+
+        val fadeIn = ObjectAnimator.ofFloat(binding.fabMain, "alpha", 0f, 1f)
+        fadeIn.duration = 100
+
+        fadeOut.addListener(object : AnimatorListenerAdapter() {
+            override fun onAnimationEnd(animation: Animator) {
+                binding.fabMain.setImageResource(iconResource)
+                fadeIn.start()
+            }
+        })
+
+        fadeOut.start()
+
+
         if (isOpen) {
             binding.fabStyleStandard.show()
             binding.fabStyleSatellite.show()
@@ -672,7 +693,9 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
                 }
                 .start()
         }
+
     }
+
 
     private fun animateFabClick(fab: FloatingActionButton) {
         fab.animate()

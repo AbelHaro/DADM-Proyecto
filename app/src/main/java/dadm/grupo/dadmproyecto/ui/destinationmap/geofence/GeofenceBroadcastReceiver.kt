@@ -1,4 +1,4 @@
-package dadm.grupo.dadmproyecto.ui.geofence
+package dadm.grupo.dadmproyecto.ui.destinationmap.geofence
 
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -9,7 +9,6 @@ import com.google.android.gms.location.GeofenceStatusCodes
 import com.google.android.gms.location.GeofencingEvent
 import dadm.grupo.dadmproyecto.data.auth.AuthRepository
 import dadm.grupo.dadmproyecto.data.db.LocationsVisitedRepository
-import dadm.grupo.dadmproyecto.ui.destinationmap.GeofenceEventChannel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

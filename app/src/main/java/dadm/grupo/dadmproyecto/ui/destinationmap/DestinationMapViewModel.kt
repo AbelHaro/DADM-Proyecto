@@ -22,7 +22,8 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import dadm.grupo.dadmproyecto.data.auth.AuthRepository
 import dadm.grupo.dadmproyecto.data.db.LocationsRepository
-import dadm.grupo.dadmproyecto.ui.geofence.GeofenceBroadcastReceiver
+import dadm.grupo.dadmproyecto.ui.destinationmap.geofence.GeofenceBroadcastReceiver
+import dadm.grupo.dadmproyecto.ui.destinationmap.geofence.GeofenceEventChannel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers

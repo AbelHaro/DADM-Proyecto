@@ -1,4 +1,4 @@
-package dadm.grupo.dadmproyecto.ui.geofence
+package dadm.grupo.dadmproyecto.ui.destinationmap.geofence
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
