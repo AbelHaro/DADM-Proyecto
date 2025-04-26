@@ -110,7 +110,7 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
         val prefs = requireContext().getSharedPreferences("map_prefs", Context.MODE_PRIVATE)
 
 
-        prefs.edit { putBoolean("has_seen_tutorial", false) }
+        //prefs.edit { putBoolean("has_seen_tutorial", false) }
 
 
         val hasSeenTutorial = prefs.getBoolean("has_seen_tutorial", false)
@@ -473,16 +473,6 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
                             location?.let {
                                 Log.d("DestinationMapFragment", "Location updated: $it")
                                 mapLibreMap?.locationComponent?.forceLocationUpdate(it)
-
-                                if (viewModel.isMapCenteredInUserLocation.value) {
-                                    val latLng = LatLng(it.latitude, it.longitude)
-                                    mapLibreMap?.animateCamera(
-                                        org.maplibre.android.camera.CameraUpdateFactory.newLatLngZoom(
-                                            latLng,
-                                            MAP_ZOOM_LEVEL
-                                        )
-                                    )
-                                }
                             }
                         }
                     }

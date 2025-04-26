@@ -34,6 +34,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import org.maplibre.android.geometry.LatLng
 import javax.inject.Inject
 
@@ -205,6 +206,7 @@ class DestinationMapViewModel @Inject constructor(
         MutableStateFlow(null)
     var lastKnownLocation: StateFlow<Location?> = _lastKnownLocation.asStateFlow()
 
+    @SuppressLint("MissingPermission")
     fun getAccurateLocationUpdates(): Flow<Location?> =
         callbackFlow {
             val locationCallback = object : LocationCallback() {
@@ -212,6 +214,7 @@ class DestinationMapViewModel @Inject constructor(
                     val location = locationResult.lastLocation
                     _lastKnownLocation.value = location
                     trySend(location)
+                    Log.d("LocationUpdates", "Continuous location update: $location")
                 }
             }
 
@@ -221,21 +224,39 @@ class DestinationMapViewModel @Inject constructor(
                 ) == PackageManager.PERMISSION_GRANTED
             ) {
                 try {
+                    val lastKnown = locationClient.lastLocation.await()
+                    if (lastKnown != null) {
+                        _lastKnownLocation.value = lastKnown
+                        trySend(lastKnown)
+                        Log.d("LocationUpdates", "Sent last known location: $lastKnown")
+                    } else {
+                        Log.d("LocationUpdates", "Last known location is null.")
+                    }
+                } catch (e: Exception) {
+                    Log.e("LocationUpdates", "Error getting last known location: ${e.message}")
+                }
+
+                try {
                     locationClient.requestLocationUpdates(
                         locationRequest,
                         locationCallback,
                         Looper.getMainLooper()
                     )
+                    Log.d("LocationUpdates", "Requested continuous location updates.")
                 } catch (e: SecurityException) {
-                    Log.e("DestinationMapViewModel", "Security exception: ${e.message}")
+                    Log.e(
+                        "DestinationMapViewModel",
+                        "Security exception on requestLocationUpdates: ${e.message}"
+                    )
                     close(e)
                 }
             } else {
-                Log.d("DestinationMapViewModel", "Location permission not granted")
+                Log.d("DestinationMapViewModel", "Location permission not granted for updates")
                 close(SecurityException("Location permission not granted"))
             }
 
             awaitClose {
+                Log.d("LocationUpdates", "Stopping location updates.")
                 locationClient.removeLocationUpdates(locationCallback)
             }
         }.flowOn(Dispatchers.IO)
