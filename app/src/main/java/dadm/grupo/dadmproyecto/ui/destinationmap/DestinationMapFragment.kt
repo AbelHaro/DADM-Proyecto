@@ -82,12 +82,30 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
     override fun onMapReady(mapLibreMap: MapLibreMap) {
         this.mapLibreMap = mapLibreMap
         setupMapStyle(mapLibreMap)
-        setupCameraAndBounds(mapLibreMap)
+        setupCameraAndBounds(mapLibreMap) // Sets initial position (e.g., UPV)
+
+        // If the map should be centered on the user, immediately move the camera
+        // to the last known location without animation to prevent the initial jump.
+        if (viewModel.isMapCenteredInUserLocation.value) {
+            viewModel.lastKnownLocation.value?.let { location ->
+                val userLatLng = LatLng(location.latitude, location.longitude)
+                mapLibreMap.cameraPosition = org.maplibre.android.camera.CameraPosition.Builder()
+                    .target(userLatLng)
+                    .zoom(MAP_ZOOM_LEVEL) // Use the same zoom level
+                    .build()
+                Log.d(
+                    "CenterLocation",
+                    "onMapReady: Immediately centering on last known user location."
+                )
+            } ?: run {
+                Log.d("CenterLocation", "onMapReady: Centering enabled, but last location is null.")
+            }
+        }
 
         // Setup map interaction listeners here, after the map is ready
         setupMapListeners(mapLibreMap)
         // Setup marker click listener (it will handle clicks if markers exist)
-        setupMarkerClickListener(markerOriginalBitmaps, selectedMarker)
+        setupMarkerClickListener(markerOriginalBitmaps)
 
         val prefs = requireContext().getSharedPreferences("map_prefs", Context.MODE_PRIVATE)
 
@@ -118,6 +136,7 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
         val upvLat = viewModel.upvPosition.latitude
         val upvLng = viewModel.upvPosition.longitude
 
+        // This sets the default position if not immediately overridden by user centering logic above
         map.cameraPosition = org.maplibre.android.camera.CameraPosition.Builder()
             .target(LatLng(upvLat, upvLng))
             .zoom(MAP_ZOOM_LEVEL)
@@ -334,34 +353,30 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
                 Log.d("CenterLocation", "Camera moved manually")
             }
 
-            // Keep info window updated if a marker is selected
+            // If a marker is selected, deselect it when the map moves
             selectedMarker?.let { marker ->
-                if (marker.isInfoWindowShown) {
-                    // Refresh the info window position
-                    marker.hideInfoWindow()
-                    marker.showInfoWindow(map, binding.mapView)
-                }
+                Log.d("MarkerDeselect", "Map moved, deselecting marker: ${marker.title}")
+                restoreMarkerIcon(marker, markerOriginalBitmaps)
+                marker.hideInfoWindow()
+                selectedMarker = null
             }
         }
     }
 
     private fun setupMarkerClickListener(
-        markerBitmaps: MutableMap<Marker, Bitmap>,
-        selected: Marker?
+        markerBitmaps: MutableMap<Marker, Bitmap>
     ) {
-        var selectedMarker = selected // Use local var to manage state within listener
-
         mapLibreMap?.setOnMarkerClickListener { marker ->
             Log.d("MarkerClick", "Marker clicked: ${marker.title}")
-            if (selectedMarker == marker) {
+            if (this.selectedMarker == marker) {
                 // Clicked the same marker again, deselect it
                 restoreMarkerIcon(marker, markerBitmaps)
                 marker.hideInfoWindow()
-                selectedMarker = null
+                this.selectedMarker = null // Update fragment's property
             } else {
                 // Clicked a new marker
                 // Deselect the previously selected marker, if any
-                selectedMarker?.let { prevMarker ->
+                this.selectedMarker?.let { prevMarker ->
                     restoreMarkerIcon(prevMarker, markerBitmaps)
                     // No need to hide info window here, showInfoWindow below handles it
                 }
@@ -371,7 +386,7 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
                     mapLibreMap!!,
                     binding.mapView
                 ) // Ensure mapLibreMap is not null here
-                selectedMarker = marker // Update the selected marker
+                this.selectedMarker = marker // Update fragment's property
             }
             true // Indicate the click was handled
         }
@@ -482,35 +497,58 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
                 viewModel.isMapCenteredInUserLocation.collect { isCentered ->
                     if (isCentered) {
                         binding.fabCenterLocation.setImageResource(R.drawable.icon_navigation_pin)
-                        // Check the collected value 'isCentered' directly
                         if (isCentered) {
-                            if (viewModel.lastKnownLocation.value == null) return@collect
-                            val latLng = LatLng(
-                                viewModel.lastKnownLocation.value!!.latitude,
-                                viewModel.lastKnownLocation.value!!.longitude
-                            )
-                            isAnimatingToUserLocation = true // Set flag before starting animation
-                            mapLibreMap?.animateCamera(
-                                org.maplibre.android.camera.CameraUpdateFactory.newLatLngZoom(
-                                    latLng,
-                                    MAP_ZOOM_LEVEL
-                                ),
-                                // Add callback to reset flag only when animation finishes or is cancelled
-                                object : MapLibreMap.CancelableCallback {
-                                    override fun onCancel() {
-                                        isAnimatingToUserLocation = false
-                                        Log.d("CenterLocation", "Animation cancelled, flag reset")
-                                    }
+                            viewModel.lastKnownLocation.value?.let { location ->
+                                val latLng = LatLng(location.latitude, location.longitude)
+                                val currentTarget = mapLibreMap?.cameraPosition?.target
+                                val distance = currentTarget?.distanceTo(latLng) ?: Double.MAX_VALUE
 
-                                    override fun onFinish() {
-                                        isAnimatingToUserLocation = false
-                                        Log.d("CenterLocation", "Animation finished, flag reset")
-                                    }
+                                if (!isAnimatingToUserLocation && distance > 10) { // Threshold distance in meters
+                                    Log.d(
+                                        "CenterLocation",
+                                        "observeMapIsCenteredInUserLocation: Animating to user location."
+                                    )
+                                    isAnimatingToUserLocation =
+                                        true // Set flag before starting animation
+                                    mapLibreMap?.animateCamera(
+                                        org.maplibre.android.camera.CameraUpdateFactory.newLatLngZoom(
+                                            latLng,
+                                            MAP_ZOOM_LEVEL
+                                        ),
+                                        object : MapLibreMap.CancelableCallback {
+                                            override fun onCancel() {
+                                                isAnimatingToUserLocation = false
+                                                Log.d(
+                                                    "CenterLocation",
+                                                    "Animation cancelled, flag reset"
+                                                )
+                                            }
+
+                                            override fun onFinish() {
+                                                isAnimatingToUserLocation = false
+                                                Log.d(
+                                                    "CenterLocation",
+                                                    "Animation finished, flag reset"
+                                                )
+                                            }
+                                        }
+                                    )
+                                } else {
+                                    Log.d(
+                                        "CenterLocation",
+                                        "observeMapIsCenteredInUserLocation: Already centered or animating, skipping animation."
+                                    )
                                 }
-                            )
+                            } ?: run {
+                                Log.d(
+                                    "CenterLocation",
+                                    "observeMapIsCenteredInUserLocation: Centering enabled, but last location is null."
+                                )
+                            }
                         }
                     } else {
                         binding.fabCenterLocation.setImageResource(R.drawable.icon_navigation_off)
+                        isAnimatingToUserLocation = false
                     }
                 }
             }
@@ -542,6 +580,7 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
                 locationComponent.isLocationComponentEnabled = true
             }
         }
+        isAnimatingToUserLocation = false
     }
 
     override fun onPause() {
