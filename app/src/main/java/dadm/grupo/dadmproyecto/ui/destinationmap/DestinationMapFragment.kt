@@ -2,8 +2,10 @@ package dadm.grupo.dadmproyecto.ui.destinationmap
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.Rect
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -12,12 +14,16 @@ import android.view.ViewGroup
 import android.view.animation.AccelerateInterpolator
 import android.view.animation.DecelerateInterpolator
 import androidx.core.app.ActivityCompat
+import androidx.core.content.edit
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.getkeepsafe.taptargetview.TapTarget
+import com.getkeepsafe.taptargetview.TapTargetSequence
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import dadm.grupo.dadmproyecto.R
 import dadm.grupo.dadmproyecto.databinding.FragmentDestinationMapBinding
 import dadm.grupo.dadmproyecto.utils.LoadImageUtils.createCircularBitmapFromBitmap
 import dadm.grupo.dadmproyecto.utils.LoadImageUtils.loadBitmapFromUrl
@@ -48,6 +54,7 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
     private val binding get() = _binding!!
     private val viewModel: DestinationMapViewModel by viewModels()
     private var mapLibreMap: MapLibreMap? = null
+    private var isAnimatingToUserLocation = false // Flag to track centering animation
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -75,9 +82,45 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
     override fun onMapReady(mapLibreMap: MapLibreMap) {
         this.mapLibreMap = mapLibreMap
         setupMapStyle(mapLibreMap)
-        setupCameraAndBounds(mapLibreMap)
-    }
+        setupCameraAndBounds(mapLibreMap) // Sets initial position (e.g., UPV)
 
+        // If the map should be centered on the user, immediately move the camera
+        // to the last known location without animation to prevent the initial jump.
+        if (viewModel.isMapCenteredInUserLocation.value) {
+            viewModel.lastKnownLocation.value?.let { location ->
+                val userLatLng = LatLng(location.latitude, location.longitude)
+                mapLibreMap.cameraPosition = org.maplibre.android.camera.CameraPosition.Builder()
+                    .target(userLatLng)
+                    .zoom(MAP_ZOOM_LEVEL) // Use the same zoom level
+                    .build()
+                Log.d(
+                    "CenterLocation",
+                    "onMapReady: Immediately centering on last known user location."
+                )
+            } ?: run {
+                Log.d("CenterLocation", "onMapReady: Centering enabled, but last location is null.")
+            }
+        }
+
+        // Setup map interaction listeners here, after the map is ready
+        setupMapListeners(mapLibreMap)
+        // Setup marker click listener (it will handle clicks if markers exist)
+        setupMarkerClickListener(markerOriginalBitmaps)
+
+        val prefs = requireContext().getSharedPreferences("map_prefs", Context.MODE_PRIVATE)
+
+
+        //prefs.edit { putBoolean("has_seen_tutorial", false) }
+
+
+        val hasSeenTutorial = prefs.getBoolean("has_seen_tutorial", false)
+        Log.d("DestinationMapFragment", "Has seen tutorial: $hasSeenTutorial")
+
+        if (!hasSeenTutorial) {
+            startTutorial()
+            prefs.edit { putBoolean("has_seen_tutorial", true) }
+        }
+    }
 
     private fun setupMapStyle(map: MapLibreMap) {
         map.setStyle(Style.Builder().fromJson(viewModel.mapStyle.value)) { style ->
@@ -93,6 +136,7 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
         val upvLat = viewModel.upvPosition.latitude
         val upvLng = viewModel.upvPosition.longitude
 
+        // This sets the default position if not immediately overridden by user centering logic above
         map.cameraPosition = org.maplibre.android.camera.CameraPosition.Builder()
             .target(LatLng(upvLat, upvLng))
             .zoom(MAP_ZOOM_LEVEL)
@@ -149,7 +193,6 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
             .build()
     }
 
-
     private fun observeNavigationEvents() {
         observeFabMenuState()
         observeMapStyle()
@@ -157,6 +200,7 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
         observeVisitedLocations()
         observeLastDiscoveredLocation()
         observeAccurateLocationUpdates()
+        observeMapIsCenteredInUserLocation()
 
         setupFabAnimations()
 
@@ -168,6 +212,11 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
         binding.fabStyleSatellite.setOnClickListener {
             viewModel.changeMapStyle(SATELLITE_MAP_STYLE)
             viewModel.toggleFabMenu()
+        }
+
+        binding.fabCenterLocation.setOnClickListener {
+            Log.d("CenterLocation", "FAB clicked")
+            viewModel.changeMapCenterInUserLocation()
         }
     }
 
@@ -245,7 +294,6 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
                         "Visited locations: ${visitedLocations.size}, New locations: ${newLocations.size}"
                     )
 
-
                     if (newLocations.isNotEmpty()) {
                         Log.d(
                             "DestinationMapFragment",
@@ -277,59 +325,70 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
                                 }
                             }
                         }
-
-                        // Only setup the click listener if we have markers
-                        if (markerOriginalBitmaps.isNotEmpty()) {
-                            setupMarkerClickListener(markerOriginalBitmaps, selectedMarker)
-                        }
                     }
                 }
             }
         }
     }
 
-    private fun setupMarkerClickListener(
-        markerBitmaps: MutableMap<Marker, Bitmap>,
-        selected: Marker?
-    ) {
-        var selectedMarker = selected
+    private fun setupMapListeners(map: MapLibreMap) {
+        map.addOnMapClickListener { point ->
+            Log.d("CenterLocation", "Map clicked at: $point")
+            isAnimatingToUserLocation = false // Stop tracking animation on map click
+            viewModel.setMapCenterInUserLocation(false)
 
-        mapLibreMap?.setOnMarkerClickListener { marker ->
-            if (selectedMarker == marker) {
-                restoreMarkerIcon(marker, markerBitmaps)
-                marker.hideInfoWindow()
-                selectedMarker = null
-            } else {
-                selectedMarker?.let { marker ->
-                    restoreMarkerIcon(
-                        marker,
-                        markerBitmaps
-                    ).also { marker.hideInfoWindow() }
-                }
-                enlargeMarkerIcon(marker, markerBitmaps)
-                marker.showInfoWindow(mapLibreMap!!, binding.mapView)
-                selectedMarker = marker
-            }
-            true
-        }
-
-        mapLibreMap?.addOnMapClickListener {
+            // Also handle deselecting marker on map click
             selectedMarker?.let {
-                restoreMarkerIcon(it, markerBitmaps)
+                restoreMarkerIcon(it, markerOriginalBitmaps)
                 it.hideInfoWindow()
                 selectedMarker = null
             }
-            true
+            true // Indicate the click was handled
         }
 
-        mapLibreMap?.addOnCameraMoveListener {
-            selectedMarker?.let { marker ->
-                if (marker.isInfoWindowShown) {
-                    // Refresh the info window position
-                    marker.hideInfoWindow()
-                    marker.showInfoWindow(mapLibreMap!!, binding.mapView)
-                }
+        map.addOnCameraMoveListener {
+            // Only set centered to false if the move wasn't caused by our animation
+            if (!isAnimatingToUserLocation) {
+                viewModel.setMapCenterInUserLocation(false)
+                Log.d("CenterLocation", "Camera moved manually")
             }
+
+            // If a marker is selected, deselect it when the map moves
+            selectedMarker?.let { marker ->
+                Log.d("MarkerDeselect", "Map moved, deselecting marker: ${marker.title}")
+                restoreMarkerIcon(marker, markerOriginalBitmaps)
+                marker.hideInfoWindow()
+                selectedMarker = null
+            }
+        }
+    }
+
+    private fun setupMarkerClickListener(
+        markerBitmaps: MutableMap<Marker, Bitmap>
+    ) {
+        mapLibreMap?.setOnMarkerClickListener { marker ->
+            Log.d("MarkerClick", "Marker clicked: ${marker.title}")
+            if (this.selectedMarker == marker) {
+                // Clicked the same marker again, deselect it
+                restoreMarkerIcon(marker, markerBitmaps)
+                marker.hideInfoWindow()
+                this.selectedMarker = null // Update fragment's property
+            } else {
+                // Clicked a new marker
+                // Deselect the previously selected marker, if any
+                this.selectedMarker?.let { prevMarker ->
+                    restoreMarkerIcon(prevMarker, markerBitmaps)
+                    // No need to hide info window here, showInfoWindow below handles it
+                }
+                // Select the new marker
+                enlargeMarkerIcon(marker, markerBitmaps)
+                marker.showInfoWindow(
+                    mapLibreMap!!,
+                    binding.mapView
+                ) // Ensure mapLibreMap is not null here
+                this.selectedMarker = marker // Update fragment's property
+            }
+            true // Indicate the click was handled
         }
     }
 
@@ -413,11 +472,7 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
                         viewModel.getAccurateLocationUpdates().collect { location ->
                             location?.let {
                                 Log.d("DestinationMapFragment", "Location updated: $it")
-                                val latLng = LatLng(it.latitude, it.longitude)
                                 mapLibreMap?.locationComponent?.forceLocationUpdate(it)
-                                mapLibreMap?.animateCamera(
-                                    org.maplibre.android.camera.CameraUpdateFactory.newLatLng(latLng)
-                                )
                             }
                         }
                     }
@@ -426,6 +481,69 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
         }
     }
 
+    private fun observeMapIsCenteredInUserLocation() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.isMapCenteredInUserLocation.collect { isCentered ->
+                    if (isCentered) {
+                        binding.fabCenterLocation.setImageResource(R.drawable.icon_navigation_pin)
+                        if (isCentered) {
+                            viewModel.lastKnownLocation.value?.let { location ->
+                                val latLng = LatLng(location.latitude, location.longitude)
+                                val currentTarget = mapLibreMap?.cameraPosition?.target
+                                val distance = currentTarget?.distanceTo(latLng) ?: Double.MAX_VALUE
+
+                                if (!isAnimatingToUserLocation && distance > 10) { // Threshold distance in meters
+                                    Log.d(
+                                        "CenterLocation",
+                                        "observeMapIsCenteredInUserLocation: Animating to user location."
+                                    )
+                                    isAnimatingToUserLocation =
+                                        true // Set flag before starting animation
+                                    mapLibreMap?.animateCamera(
+                                        org.maplibre.android.camera.CameraUpdateFactory.newLatLngZoom(
+                                            latLng,
+                                            MAP_ZOOM_LEVEL
+                                        ),
+                                        object : MapLibreMap.CancelableCallback {
+                                            override fun onCancel() {
+                                                isAnimatingToUserLocation = false
+                                                Log.d(
+                                                    "CenterLocation",
+                                                    "Animation cancelled, flag reset"
+                                                )
+                                            }
+
+                                            override fun onFinish() {
+                                                isAnimatingToUserLocation = false
+                                                Log.d(
+                                                    "CenterLocation",
+                                                    "Animation finished, flag reset"
+                                                )
+                                            }
+                                        }
+                                    )
+                                } else {
+                                    Log.d(
+                                        "CenterLocation",
+                                        "observeMapIsCenteredInUserLocation: Already centered or animating, skipping animation."
+                                    )
+                                }
+                            } ?: run {
+                                Log.d(
+                                    "CenterLocation",
+                                    "observeMapIsCenteredInUserLocation: Centering enabled, but last location is null."
+                                )
+                            }
+                        }
+                    } else {
+                        binding.fabCenterLocation.setImageResource(R.drawable.icon_navigation_off)
+                        isAnimatingToUserLocation = false
+                    }
+                }
+            }
+        }
+    }
 
     override fun onStart() {
         super.onStart()
@@ -452,6 +570,7 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
                 locationComponent.isLocationComponentEnabled = true
             }
         }
+        isAnimatingToUserLocation = false
     }
 
     override fun onPause() {
@@ -480,10 +599,10 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
         addedLocationIds.clear()
         markerOriginalBitmaps.clear()
         selectedMarker = null
+        isAnimatingToUserLocation = false // Reset flag on destroy
         _binding = null
         mapLibreMap = null
     }
-
 
     private fun setupFabAnimations() {
         // Setup click listeners with animations
@@ -568,5 +687,121 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
                     .start()
             }
             .start()
+    }
+
+    companion object {
+        private const val ID_MAP_STYLE_FAB = 100
+        private const val ID_MAP_STYLE_SATELLITE = 101
+        private const val ID_MAP_STYLE_STANDARD = 102
+        private const val ID_MAP_CENTER_LOCATION = 103
+
+    }
+
+    private fun startTutorial() {
+        // Define the bounds for the first tap target (center of the screen)
+        val displayMetrics = resources.displayMetrics
+        val screenWidth = displayMetrics.widthPixels
+        val screenHeight = displayMetrics.heightPixels
+        val centerX = screenWidth / 2
+        val centerY = screenHeight / 2
+        val targetRadius = 100 // Adjust radius as needed
+        val targetBounds = Rect(
+            centerX - targetRadius,
+            centerY - targetRadius,
+            centerX + targetRadius,
+            centerY + targetRadius
+        )
+
+        val sequence = TapTargetSequence(requireActivity())
+            .targets(
+                TapTarget.forBounds(
+                    targetBounds,
+                    "Explicación del mapa",
+                    "El mapa muestra la ubicación de la UPV y los lugares que has visitado"
+                )
+                    .id(0)
+                    .textColor(android.R.color.white)
+                    .transparentTarget(true) // deja ver el botón exactamente igual
+                    .targetCircleColor(android.R.color.transparent) // sin color sobre el botón
+                    .cancelable(false), // FAB principal
+
+                TapTarget.forView(
+                    binding.fabMain,
+                    "Estilos de Mapa",
+                    "Haz clic aquí para cambiar el estilo del mapa"
+                )
+                    .id(ID_MAP_STYLE_FAB)
+                    .transparentTarget(true) // deja ver el botón exactamente igual
+                    .targetCircleColor(android.R.color.transparent) // sin color sobre el botón
+                    .textColor(android.R.color.white)
+                    .cancelable(false), // FAB principal
+
+                TapTarget.forView(
+                    binding.fabStyleSatellite,
+                    "Estilo Satélite",
+                    "Haz clic aquí para cambiar al estilo satélite"
+                )
+                    .id(ID_MAP_STYLE_SATELLITE)
+                    .transparentTarget(true) // deja ver el botón exactamente igual
+                    .targetCircleColor(android.R.color.transparent) // sin color sobre el botón
+                    .textColor(android.R.color.white)
+                    .cancelable(false), // FAB estilo satélite
+
+                TapTarget.forView(
+                    binding.fabStyleStandard,
+                    "Estilo Estándar",
+                    "Haz clic aquí para cambiar al estilo estándar"
+                )
+                    .id(ID_MAP_STYLE_STANDARD)
+                    .transparentTarget(true) // deja ver el botón exactamente igual
+                    .targetCircleColor(android.R.color.transparent) // sin color sobre el botón
+                    .textColor(android.R.color.white)
+                    .cancelable(false), // FAB estilo estándar
+                TapTarget.forView(
+                    binding.fabCenterLocation,
+                    "Ubicación Actual",
+                    "Haz clic aquí para centrar el mapa en tu ubicación actual"
+                )
+                    .id(ID_MAP_CENTER_LOCATION)
+                    .transparentTarget(true) // deja ver el botón exactamente igual
+                    .targetCircleColor(android.R.color.transparent) // sin color sobre el botón
+                    .textColor(android.R.color.white)
+                    .cancelable(false) // FAB ubicación actual
+            )
+            .listener(object : TapTargetSequence.Listener {
+                override fun onSequenceFinish() {
+                    Log.d("DestinationMapFragment", "Tutorial completed")
+                }
+
+                override fun onSequenceStep(currentTarget: TapTarget, targetClicked: Boolean) {
+                    Log.d(
+                        "DestinationMapFragment",
+                        "Tutorial step completed: $currentTarget, Clicked: $targetClicked"
+                    )
+                    if (targetClicked && currentTarget.id() == ID_MAP_STYLE_FAB) {
+                        binding.fabMain.performClick()
+                    }
+
+                    if (targetClicked && currentTarget.id() == ID_MAP_STYLE_SATELLITE) {
+                        binding.fabStyleSatellite.performClick()
+                        binding.fabMain.performClick()
+                    }
+
+                    if (targetClicked && currentTarget.id() == ID_MAP_STYLE_STANDARD) {
+                        binding.fabStyleStandard.performClick()
+                    }
+
+                    if (targetClicked && currentTarget.id() == ID_MAP_CENTER_LOCATION) {
+                        binding.fabCenterLocation.performClick()
+                    }
+
+                }
+
+                override fun onSequenceCanceled(lastTarget: TapTarget) {
+                    Log.d("DestinationMapFragment", "Tutorial canceled at: $lastTarget")
+                }
+            })
+
+        sequence.start()
     }
 }

@@ -34,6 +34,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import org.maplibre.android.geometry.LatLng
 import javax.inject.Inject
 
@@ -69,8 +70,14 @@ class DestinationMapViewModel @Inject constructor(
     val mapStyle: StateFlow<String> = _mapStyle.asStateFlow()
 
 
-    private val isFabMenuOpen = MutableStateFlow(false)
-    val isFabMenuOpenState: StateFlow<Boolean> = isFabMenuOpen.asStateFlow()
+    private val _isFabMenuOpen = MutableStateFlow(false)
+    val isFabMenuOpenState: StateFlow<Boolean> = _isFabMenuOpen.asStateFlow()
+
+    private val _isMapCenteredInUserLocation =
+        MutableStateFlow(false)
+
+    val isMapCenteredInUserLocation: StateFlow<Boolean> = _isMapCenteredInUserLocation.asStateFlow()
+
 
     private var _isLocationPermissionGranted =
         MutableStateFlow(
@@ -164,9 +171,20 @@ class DestinationMapViewModel @Inject constructor(
     }
 
     fun toggleFabMenu() {
-        isFabMenuOpen.value = !isFabMenuOpen.value
+        _isFabMenuOpen.value = !_isFabMenuOpen.value
     }
 
+    fun changeMapCenterInUserLocation() {
+        _isMapCenteredInUserLocation.value = !_isMapCenteredInUserLocation.value
+        Log.d(
+            "CenterLocation",
+            "Map centered in user location: ${_isMapCenteredInUserLocation.value}"
+        )
+    }
+
+    fun setMapCenterInUserLocation(b: Boolean) {
+        _isMapCenteredInUserLocation.value = b
+    }
 
     private fun loadJsonFromFile(context: Context, fileName: String): String {
         return context.assets.open(fileName).bufferedReader().use { it.readText() }
@@ -184,11 +202,19 @@ class DestinationMapViewModel @Inject constructor(
                     PackageManager.PERMISSION_GRANTED
     }
 
+    private var _lastKnownLocation: MutableStateFlow<Location?> =
+        MutableStateFlow(null)
+    var lastKnownLocation: StateFlow<Location?> = _lastKnownLocation.asStateFlow()
+
+    @SuppressLint("MissingPermission")
     fun getAccurateLocationUpdates(): Flow<Location?> =
         callbackFlow {
             val locationCallback = object : LocationCallback() {
                 override fun onLocationResult(locationResult: LocationResult) {
-                    trySend(locationResult.lastLocation)
+                    val location = locationResult.lastLocation
+                    _lastKnownLocation.value = location
+                    trySend(location)
+                    Log.d("LocationUpdates", "Continuous location update: $location")
                 }
             }
 
@@ -198,24 +224,43 @@ class DestinationMapViewModel @Inject constructor(
                 ) == PackageManager.PERMISSION_GRANTED
             ) {
                 try {
+                    val lastKnown = locationClient.lastLocation.await()
+                    if (lastKnown != null) {
+                        _lastKnownLocation.value = lastKnown
+                        trySend(lastKnown)
+                        Log.d("LocationUpdates", "Sent last known location: $lastKnown")
+                    } else {
+                        Log.d("LocationUpdates", "Last known location is null.")
+                    }
+                } catch (e: Exception) {
+                    Log.e("LocationUpdates", "Error getting last known location: ${e.message}")
+                }
+
+                try {
                     locationClient.requestLocationUpdates(
                         locationRequest,
                         locationCallback,
                         Looper.getMainLooper()
                     )
+                    Log.d("LocationUpdates", "Requested continuous location updates.")
                 } catch (e: SecurityException) {
-                    Log.e("DestinationMapViewModel", "Security exception: ${e.message}")
+                    Log.e(
+                        "DestinationMapViewModel",
+                        "Security exception on requestLocationUpdates: ${e.message}"
+                    )
                     close(e)
                 }
             } else {
-                Log.d("DestinationMapViewModel", "Location permission not granted")
+                Log.d("DestinationMapViewModel", "Location permission not granted for updates")
                 close(SecurityException("Location permission not granted"))
             }
 
             awaitClose {
+                Log.d("LocationUpdates", "Stopping location updates.")
                 locationClient.removeLocationUpdates(locationCallback)
             }
         }.flowOn(Dispatchers.IO)
+
 
     private fun createGeofencesFromLocations(locations: List<dadm.grupo.dadmproyecto.domain.model.Location>) {
         geofenceList.clear()

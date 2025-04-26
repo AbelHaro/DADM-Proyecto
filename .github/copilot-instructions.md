@@ -2,7 +2,7 @@
 
 - Este es un proyecto en de desarrollo en Android que utiliza Kotlin y XML.
 
-- El proyecto tiene una estructura de carpetas estándar de Android.
+- El proyecto tiene una estructura de carpetas siguiendo la arquitectura MVVM.
 
 - Sigue el estilo de codificación de Kotlin y XML.
 
