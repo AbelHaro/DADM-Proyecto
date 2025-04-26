@@ -69,8 +69,14 @@ class DestinationMapViewModel @Inject constructor(
     val mapStyle: StateFlow<String> = _mapStyle.asStateFlow()
 
 
-    private val isFabMenuOpen = MutableStateFlow(false)
-    val isFabMenuOpenState: StateFlow<Boolean> = isFabMenuOpen.asStateFlow()
+    private val _isFabMenuOpen = MutableStateFlow(false)
+    val isFabMenuOpenState: StateFlow<Boolean> = _isFabMenuOpen.asStateFlow()
+
+    private val _isMapCenteredInUserLocation =
+        MutableStateFlow(false)
+
+    val isMapCenteredInUserLocation: StateFlow<Boolean> = _isMapCenteredInUserLocation.asStateFlow()
+
 
     private var _isLocationPermissionGranted =
         MutableStateFlow(
@@ -164,9 +170,20 @@ class DestinationMapViewModel @Inject constructor(
     }
 
     fun toggleFabMenu() {
-        isFabMenuOpen.value = !isFabMenuOpen.value
+        _isFabMenuOpen.value = !_isFabMenuOpen.value
     }
 
+    fun changeMapCenterInUserLocation() {
+        _isMapCenteredInUserLocation.value = !_isMapCenteredInUserLocation.value
+        Log.d(
+            "CenterLocation",
+            "Map centered in user location: ${_isMapCenteredInUserLocation.value}"
+        )
+    }
+
+    fun setMapCenterInUserLocation(b: Boolean) {
+        _isMapCenteredInUserLocation.value = b
+    }
 
     private fun loadJsonFromFile(context: Context, fileName: String): String {
         return context.assets.open(fileName).bufferedReader().use { it.readText() }
@@ -184,11 +201,17 @@ class DestinationMapViewModel @Inject constructor(
                     PackageManager.PERMISSION_GRANTED
     }
 
+    private var _lastKnownLocation: MutableStateFlow<Location?> =
+        MutableStateFlow(null)
+    var lastKnownLocation: StateFlow<Location?> = _lastKnownLocation.asStateFlow()
+
     fun getAccurateLocationUpdates(): Flow<Location?> =
         callbackFlow {
             val locationCallback = object : LocationCallback() {
                 override fun onLocationResult(locationResult: LocationResult) {
-                    trySend(locationResult.lastLocation)
+                    val location = locationResult.lastLocation
+                    _lastKnownLocation.value = location
+                    trySend(location)
                 }
             }
 
@@ -216,6 +239,7 @@ class DestinationMapViewModel @Inject constructor(
                 locationClient.removeLocationUpdates(locationCallback)
             }
         }.flowOn(Dispatchers.IO)
+
 
     private fun createGeofencesFromLocations(locations: List<dadm.grupo.dadmproyecto.domain.model.Location>) {
         geofenceList.clear()
