@@ -110,7 +110,7 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
         val prefs = requireContext().getSharedPreferences("map_prefs", Context.MODE_PRIVATE)
 
 
-        //prefs.edit { putBoolean("has_seen_tutorial", false) }
+        prefs.edit { putBoolean("has_seen_tutorial", false) }
 
 
         val hasSeenTutorial = prefs.getBoolean("has_seen_tutorial", false)
@@ -703,6 +703,8 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
         private const val ID_MAP_STYLE_FAB = 100
         private const val ID_MAP_STYLE_SATELLITE = 101
         private const val ID_MAP_STYLE_STANDARD = 102
+        private const val ID_MAP_CENTER_LOCATION = 103
+
     }
 
     private fun startTutorial() {
@@ -764,7 +766,17 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
                     .transparentTarget(true) // deja ver el botón exactamente igual
                     .targetCircleColor(android.R.color.transparent) // sin color sobre el botón
                     .textColor(android.R.color.white)
-                    .cancelable(false) // FAB estilo estándar
+                    .cancelable(false), // FAB estilo estándar
+                TapTarget.forView(
+                    binding.fabCenterLocation,
+                    "Ubicación Actual",
+                    "Haz clic aquí para centrar el mapa en tu ubicación actual"
+                )
+                    .id(ID_MAP_CENTER_LOCATION)
+                    .transparentTarget(true) // deja ver el botón exactamente igual
+                    .targetCircleColor(android.R.color.transparent) // sin color sobre el botón
+                    .textColor(android.R.color.white)
+                    .cancelable(false) // FAB ubicación actual
             )
             .listener(object : TapTargetSequence.Listener {
                 override fun onSequenceFinish() {
@@ -788,6 +800,11 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
                     if (targetClicked && currentTarget.id() == ID_MAP_STYLE_STANDARD) {
                         binding.fabStyleStandard.performClick()
                     }
+
+                    if (targetClicked && currentTarget.id() == ID_MAP_CENTER_LOCATION) {
+                        binding.fabCenterLocation.performClick()
+                    }
+
                 }
 
                 override fun onSequenceCanceled(lastTarget: TapTarget) {
