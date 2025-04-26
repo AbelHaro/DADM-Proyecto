@@ -2,6 +2,7 @@ package dadm.grupo.dadmproyecto.ui.destinationmap
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.os.Bundle
@@ -12,11 +13,14 @@ import android.view.ViewGroup
 import android.view.animation.AccelerateInterpolator
 import android.view.animation.DecelerateInterpolator
 import androidx.core.app.ActivityCompat
+import androidx.core.content.edit
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.getkeepsafe.taptargetview.TapTarget
+import com.getkeepsafe.taptargetview.TapTargetSequence
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import dadm.grupo.dadmproyecto.databinding.FragmentDestinationMapBinding
 import dadm.grupo.dadmproyecto.utils.LoadImageUtils.createCircularBitmapFromBitmap
@@ -76,6 +80,21 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
         this.mapLibreMap = mapLibreMap
         setupMapStyle(mapLibreMap)
         setupCameraAndBounds(mapLibreMap)
+
+
+        val prefs = requireContext().getSharedPreferences("map_prefs", Context.MODE_PRIVATE)
+
+
+        prefs.edit { putBoolean("has_seen_tutorial", false) }
+
+
+        val hasSeenTutorial = prefs.getBoolean("has_seen_tutorial", false)
+        Log.d("DestinationMapFragment", "Has seen tutorial: $hasSeenTutorial")
+
+        if (!hasSeenTutorial) {
+            startTutorial()
+            prefs.edit { putBoolean("has_seen_tutorial", true) }
+        }
     }
 
 
@@ -300,9 +319,9 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
                 marker.hideInfoWindow()
                 selectedMarker = null
             } else {
-                selectedMarker?.let { marker ->
+                selectedMarker?.let { it ->
                     restoreMarkerIcon(
-                        marker,
+                        it,
                         markerBitmaps
                     ).also { marker.hideInfoWindow() }
                 }
@@ -568,5 +587,109 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
                     .start()
             }
             .start()
+    }
+
+
+    companion object {
+        private const val ID_MAP_STYLE_FAB = 100
+        private const val ID_MAP_STYLE_SATELLITE = 101
+        private const val ID_MAP_STYLE_STANDARD = 102
+    }
+
+//    private fun showTutorial() {
+//        Log.d("DestinationMapFragment", "Showing tutorial")
+//
+//        // Mostrar el cuadro de texto explicativo primero
+//        val builder = AlertDialog.Builder(requireContext())
+//            .setTitle("Bienvenido a la Aplicación")
+//            .setMessage(
+//                "Este mapa muestra la ubicación de la UPV y los lugares que has visitado"
+//            )
+//            .setCancelable(false) // No permitir que se cierre sin interactuar
+//            .setPositiveButton("Empezar Tutorial") { _, _ ->
+//                // Una vez que el usuario presione "Empezar Tutorial", inicia el tutorial
+//                startTutorial()
+//            }
+//
+//        builder.show()
+//    }
+
+    private fun startTutorial() {
+        val sequence = TapTargetSequence(requireActivity())
+            .targets(
+                TapTarget.forView(
+                    binding.ivNewLocationDiscovered,
+                    "Explicación del mapa",
+                    "El mapa muestra la ubicación de la UPV y los lugares que has visitado"
+                )
+                    .id(0)
+                    .transparentTarget(true) // deja ver el botón exactamente igual
+                    .targetCircleColor(android.R.color.transparent) // sin color sobre el botón
+                    .textColor(android.R.color.white)
+                    .cancelable(false), // FAB principal
+
+                TapTarget.forView(
+                    binding.fabMain,
+                    "Estilos de Mapa",
+                    "Haz clic aquí para cambiar el estilo del mapa"
+                )
+                    .id(ID_MAP_STYLE_FAB)
+                    .transparentTarget(true) // deja ver el botón exactamente igual
+                    .targetCircleColor(android.R.color.transparent) // sin color sobre el botón
+                    .textColor(android.R.color.white)
+                    .cancelable(false), // FAB principal
+
+                TapTarget.forView(
+                    binding.fabStyleSatellite,
+                    "Estilo Satélite",
+                    "Haz clic aquí para cambiar al estilo satélite"
+                )
+                    .id(ID_MAP_STYLE_SATELLITE)
+                    .transparentTarget(true) // deja ver el botón exactamente igual
+                    .targetCircleColor(android.R.color.transparent) // sin color sobre el botón
+                    .textColor(android.R.color.white)
+                    .cancelable(false), // FAB estilo satélite
+
+                TapTarget.forView(
+                    binding.fabStyleStandard,
+                    "Estilo Estándar",
+                    "Haz clic aquí para cambiar al estilo estándar"
+                )
+                    .id(ID_MAP_STYLE_STANDARD)
+                    .transparentTarget(true) // deja ver el botón exactamente igual
+                    .targetCircleColor(android.R.color.transparent) // sin color sobre el botón
+                    .textColor(android.R.color.white)
+                    .cancelable(false) // FAB estilo estándar
+            )
+            .listener(object : TapTargetSequence.Listener {
+                override fun onSequenceFinish() {
+                    Log.d("DestinationMapFragment", "Tutorial completed")
+                }
+
+                override fun onSequenceStep(currentTarget: TapTarget, targetClicked: Boolean) {
+                    Log.d(
+                        "DestinationMapFragment",
+                        "Tutorial step completed: $currentTarget, Clicked: $targetClicked"
+                    )
+                    if (targetClicked && currentTarget.id() == ID_MAP_STYLE_FAB) {
+                        binding.fabMain.performClick()
+                    }
+
+                    if (targetClicked && currentTarget.id() == ID_MAP_STYLE_SATELLITE) {
+                        binding.fabStyleSatellite.performClick()
+                        binding.fabMain.performClick()
+                    }
+
+                    if (targetClicked && currentTarget.id() == ID_MAP_STYLE_STANDARD) {
+                        binding.fabStyleStandard.performClick()
+                    }
+                }
+
+                override fun onSequenceCanceled(lastTarget: TapTarget) {
+                    Log.d("DestinationMapFragment", "Tutorial canceled at: $lastTarget")
+                }
+            })
+
+        sequence.start()
     }
 }

@@ -123,7 +123,7 @@ dependencies {
     implementation(libs.gotrue.kt)
 
     // Serialización (necesario para algunos módulos)
-    implementation(libs.kotlinx.serialization.json)  // Asegúrate de tener esta dependencia
+    implementation(libs.kotlinx.serialization.json)
 
     // HTTP client (Ktor)
     implementation(libs.ktor.client.android)
@@ -132,4 +132,5 @@ dependencies {
 
     implementation(libs.coil)
 
+    implementation(libs.taptargetview)
 }
