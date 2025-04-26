@@ -13,4 +13,11 @@
         android:checkable="true"
         />
 
+    <item
+        android:id="@+id/profileFragment"
+        android:title="Profile"
+        android:icon="@drawable/icon_plus"
+        android:checkable="true"
+    />
+
 </menu>

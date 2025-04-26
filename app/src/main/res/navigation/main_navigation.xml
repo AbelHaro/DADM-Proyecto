@@ -15,5 +15,10 @@
         android:name="dadm.grupo.dadmproyecto.ui.ranking.RankingFragment"
         android:label="RankingFragment"
         tools:layout="@layout/fragment_ranking" />
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="dadm.grupo.dadmproyecto.ui.profile.ProfileFragment"
+        android:label="Perfil"
+        tools:layout="@layout/fragment_profile" />
 
 </navigation>
