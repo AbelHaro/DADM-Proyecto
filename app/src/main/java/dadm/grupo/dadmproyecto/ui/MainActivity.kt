@@ -5,21 +5,29 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
+import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
+import com.google.android.material.snackbar.Snackbar
 import dadm.grupo.dadmproyecto.R
 import dadm.grupo.dadmproyecto.data.auth.AuthRepository
 import dadm.grupo.dadmproyecto.databinding.ActivityMainBinding
+import dadm.grupo.dadmproyecto.ui.main.NetworkViewModel
 import dadm.grupo.dadmproyecto.utils.PermissionUtils
 import dadm.grupo.dadmproyecto.utils.PermissionUtils.requestBackgroundLocationPermission
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -30,6 +38,9 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var navController: NavController
     private lateinit var binding: ActivityMainBinding
+    private val networkViewModel: NetworkViewModel by viewModels()
+
+    private var snackbar: Snackbar? = null
 
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
@@ -54,6 +65,9 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
+        observeNetworkConnection()
+
+        // Check permissions
         try {
             if (!PermissionUtils.hasLocationPermission(this@MainActivity)) {
                 Log.d("MainActivity", "Requesting location permission")
@@ -66,6 +80,77 @@ class MainActivity : AppCompatActivity() {
             }
         } catch (e: Exception) {
             Log.e("MainActivity", "Error checking permissions or login: ${e.message}")
+        }
+    }
+
+    private fun observeNetworkConnection() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                Log.d(
+                    "MainActivityInternet",
+                    "Starting network connection collection within STARTED lifecycle."
+                )
+                networkViewModel.isConnected.collect { isConnected ->
+                    Log.d(
+                        "MainActivityInternet",
+                        "Collected Network Status in MainActivity: $isConnected"
+                    )
+                    if (isConnected) {
+                        if (snackbar != null) {
+                            Log.d("MainActivityInternet", "Network connected. Dismissing Snackbar.")
+                            snackbar?.dismiss()
+                            snackbar = null
+                        } else {
+                            Log.d(
+                                "MainActivityInternet",
+                                "Network connected. No Snackbar to dismiss."
+                            )
+                        }
+
+                        binding.ivNoInternet.visibility = View.GONE
+                        binding.tvNoInternet.visibility = View.GONE
+
+                    } else {
+                        if (snackbar == null) {
+                            Log.d("MainActivityInternet", "Network disconnected. Showing Snackbar.")
+                            showNoInternetSnackbar()
+                        } else {
+                            Log.d(
+                                "MainActivityInternet",
+                                "Network disconnected, but Snackbar is already visible."
+                            )
+                        }
+
+                        binding.ivNoInternet.visibility = View.VISIBLE
+                        binding.tvNoInternet.visibility = View.VISIBLE
+
+                    }
+                }
+                Log.d(
+                    "MainActivityInternet",
+                    "Stopping network connection collection (lifecycle not STARTED)."
+                )
+            }
+        }
+    }
+
+    private fun showNoInternetSnackbar() {
+        if (snackbar == null) {
+            snackbar = Snackbar.make(
+                binding.root,
+                R.string.no_internet_connection,
+                Snackbar.LENGTH_INDEFINITE
+            ).setAction(R.string.retry) {
+                // Just reset the snackbar reference.
+                snackbar = null
+            }
+            Log.d("MainActivityInternet", "Showing No Internet Snackbar instance.")
+            snackbar?.show()
+        } else {
+            Log.d(
+                "MainActivityInternet",
+                "showNoInternetSnackbar called but snackbar already exists."
+            )
         }
     }
 
@@ -84,7 +169,6 @@ class MainActivity : AppCompatActivity() {
     private fun isOnInitialDestination(): Boolean {
         return navController.currentDestination?.id == navController.graph.startDestinationId
     }
-
 
     private fun showExitConfirmationDialog() {
         AlertDialog.Builder(this)

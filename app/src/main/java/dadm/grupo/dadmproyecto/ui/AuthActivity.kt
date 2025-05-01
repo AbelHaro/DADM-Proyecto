@@ -4,17 +4,22 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
+import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
+import com.google.android.material.snackbar.Snackbar
 import dadm.grupo.dadmproyecto.R
 import dadm.grupo.dadmproyecto.data.auth.AuthRepository
 import dadm.grupo.dadmproyecto.databinding.ActivityAuthBinding
+import dadm.grupo.dadmproyecto.ui.main.NetworkViewModel
 import dadm.grupo.dadmproyecto.utils.PermissionUtils.hasBackgroundLocationPermission
 import dadm.grupo.dadmproyecto.utils.PermissionUtils.hasLocationPermission
 import dadm.grupo.dadmproyecto.utils.PermissionUtils.requestBackgroundLocationPermission
@@ -32,22 +37,54 @@ class AuthActivity : AppCompatActivity() {
     private lateinit var navController: NavController
     private lateinit var binding: ActivityAuthBinding
 
+    private val networkViewModel: NetworkViewModel by viewModels()
+    private var snackbar: Snackbar? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        binding = ActivityAuthBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        setupUI()
+
+        observeNetworkConnection()
+
+    }
+
+    private fun observeNetworkConnection() {
         lifecycleScope.launch {
-            checkLoginStatus()
-        }.also {
-            it.invokeOnCompletion {
-                setupUI()
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                networkViewModel.isConnected.collect { isConnected ->
+                    if (isConnected) {
+                        snackbar?.dismiss()  // Si se conecta, oculta el Snackbar
+                        snackbar = null  // Elimina el Snackbar cuando la conexión es exitosa
+                        lifecycleScope.launch {
+                            checkLoginStatus()
+                        }
+                    } else {
+
+                        showNoInternetSnackbar()  // Si no hay conexión y no hay Snackbar visible, muestra uno nuevo
+
+                    }
+                }
             }
         }
     }
 
+    private fun showNoInternetSnackbar() {
+        snackbar = Snackbar.make(
+            binding.root,
+            "No hay conexión a Internet",
+            Snackbar.LENGTH_INDEFINITE
+        ).setAction("Volver a intentar") {
+        }
+        snackbar?.show()  // Muestra el Snackbar
+    }
+
+
     private fun setupUI() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
-        binding = ActivityAuthBinding.inflate(layoutInflater)
-        setContentView(binding.root)
 
         navController =
             binding.authFragmentContainer.getFragment<NavHostFragment>().navController
@@ -63,7 +100,6 @@ class AuthActivity : AppCompatActivity() {
             insets
         }
 
-        // Check location permission
         if (!hasLocationPermission(this)) {
             requestLocationPermission(this)
         } else if (!hasBackgroundLocationPermission(this)) {
@@ -72,14 +108,12 @@ class AuthActivity : AppCompatActivity() {
     }
 
     private suspend fun checkLoginStatus() {
-
         try {
             if (authRepository.isUserLoggedIn()) {
                 redirectToMain()
             }
         } catch (e: Exception) {
             Log.e("AuthActivity", "Error checking login status: ${e.message}")
-
         }
     }
 
@@ -91,7 +125,7 @@ class AuthActivity : AppCompatActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
         when (requestCode) {
-            1001 -> { // Location permission
+            1001 -> {
                 if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     if (!hasBackgroundLocationPermission(this)) {
                         requestBackgroundLocationPermission(this)
@@ -105,7 +139,7 @@ class AuthActivity : AppCompatActivity() {
                 }
             }
 
-            1002 -> { // Background location permission
+            1002 -> {
                 if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     lifecycleScope.launch {
                         checkLoginStatus()

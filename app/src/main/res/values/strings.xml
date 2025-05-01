@@ -40,4 +40,6 @@
     <string name="trophy_icon">Trophy Icon</string>
     <string name="logout">Logout</string>
     <string name="user_not_ranked">You are not ranked yet</string>
+    <string name="no_internet_connection">No Internet Conection</string>
+    <string name="retry">Retry</string>
 </resources>

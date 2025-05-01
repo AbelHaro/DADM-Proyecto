@@ -19,6 +19,33 @@
         app:layout_constraintTop_toTopOf="parent"
         app:navGraph="@navigation/main_navigation" />
 
+    <ImageView
+        android:id="@+id/ivNoInternet"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="Icon No Internet"
+        android:src="@drawable/icon_no_internet"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@+id/tvNoInternet"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_chainStyle="packed"
+        tools:visibility="visible" />
+
+    <TextView
+        android:id="@+id/tvNoInternet"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="No Internet Connection"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@+id/bnvActivityMain"
+        app:layout_constraintEnd_toEndOf="@+id/ivNoInternet"
+        app:layout_constraintStart_toStartOf="@+id/ivNoInternet"
+        app:layout_constraintTop_toBottomOf="@+id/ivNoInternet"
+        tools:visibility="visible" />
+
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bnvActivityMain"
         android:layout_width="match_parent"

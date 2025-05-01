@@ -19,12 +19,10 @@ import javax.inject.Inject
 class LoginViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val usersRepository: UsersRepository,
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val supabaseClient: SupabaseClient
 ) : ViewModel() {
-
-    @Inject
-    lateinit var supabaseClient: SupabaseClient
-
+    
     fun loginUser(email: String, password: String, onResult: (Boolean, String?) -> Unit) {
         if (email.isBlank() || password.isBlank()) {
             onResult(false, context.getString(R.string.login_error_empty_fields))
@@ -81,39 +79,4 @@ class LoginViewModel @Inject constructor(
             }
         }
     }
-
-
-    /*
-    Método para iniciar sesión sin verificar el email.
-    Sólo para test y desarrollo.
-     */
-//    fun loginUserTestNoEmailVerifed(
-//        email: String,
-//        password: String,
-//        onResult: (Boolean, String?) -> Unit
-//    ) {
-//        if (email.isBlank() || password.isBlank()) {
-//            onResult(false, context.getString(R.string.login_error_empty_fields))
-//            return
-//        }
-//
-//        viewModelScope.launch {
-//            try {
-//                f.signInWithEmailAndPassword(email, password)
-//                    .addOnCompleteListener { task ->
-//                        when {
-//                            task.isSuccessful -> onResult(true, null)
-//                            else -> onResult(
-//                                false,
-//                                task.exception?.message
-//                                    ?: context.getString(R.string.login_error_unknown)
-//                            )
-//                        }
-//                    }
-//            } catch (e: Exception) {
-//                onResult(false, e.message ?: context.getString(R.string.login_error_unknown))
-//            }
-//        }
-//    }
-
 }
