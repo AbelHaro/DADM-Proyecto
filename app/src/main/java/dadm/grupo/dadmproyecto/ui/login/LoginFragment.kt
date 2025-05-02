@@ -45,7 +45,8 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
         binding.btnLogin.setOnClickListener { handleLogin() }
         binding.btnGoToMainActivityUnlogged.setOnClickListener { navigateToMainActivity() }
         binding.btnGoToMainActivityLogged.setOnClickListener { navigateToMainActivityLogged() }
-        binding.btnGoogleSignIn.setOnClickListener { handleGoogleSignIn() }
+        binding.tvForgotPassword.setOnClickListener { navigateToForgotPassword() }
+
     }
 
     private fun handleLogin() {
@@ -84,6 +85,10 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
         findNavController().navigate(R.id.actionLoginFragmentToRegisterFragment)
     }
 
+    private fun navigateToForgotPassword() {
+        findNavController().navigate(R.id.actionLoginFragmentToForgotPasswordFragment)
+    }
+
     private fun navigateToMainActivity() {
         startActivity(Intent(requireActivity(), MainActivity::class.java))
         requireActivity().finish()
@@ -105,10 +110,7 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
             }
         }
     }
-
-    private fun handleGoogleSignIn() {
-        showToast(getString(R.string.login_google_sign_in_not_implemented))
-    }
+    
 
     private fun isValidEmail(email: String): Boolean {
         return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()

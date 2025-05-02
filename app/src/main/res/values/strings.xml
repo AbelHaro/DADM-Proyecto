@@ -2,7 +2,6 @@
     <string name="app_name">DADMProyecto</string>
     <string name="login">Login</string>
     <string name="username">Username\n</string>
-    <string name="mail">Mail\n</string>
     <string name="password">Password</string>
     <string name="loginTitle">Log into your account</string>
     <string name="registerTitle">Create your account</string>
@@ -40,4 +39,7 @@
     <string name="trophy_icon">Trophy Icon</string>
     <string name="logout">Logout</string>
     <string name="user_not_ranked">You are not ranked yet</string>
+    <string name="forgot_password">Forgot Password?</string>
+    <string name="forgot_password_title">Forgot password</string>
+    <string name="send_reset_email">send email</string>
 </resources>
