@@ -59,6 +59,7 @@ const ResetPassword = () => {
       } else {
         setMessage('Password updated successfully!');
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       setMessage(`Error: ${error.message}`);
     } finally {
