@@ -7,7 +7,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.DefaultItemAnimator
+import androidx.recyclerview.widget.LinearLayoutManager
 import dadm.grupo.dadmproyecto.R
 import dadm.grupo.dadmproyecto.data.auth.AuthRepository
 import dadm.grupo.dadmproyecto.databinding.FragmentRankingBinding
@@ -21,8 +24,31 @@ class RankingFragment : Fragment(R.layout.fragment_ranking) {
     private var _binding: FragmentRankingBinding? = null
     private val binding get() = _binding!!
 
+    private val viewModel: RankingViewModel by viewModels()
+
     @Inject
     lateinit var authRepository: AuthRepository
+
+    private lateinit var rankingAdapter: RankingAdapter
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.rankingUsers.collect { rankedUsers ->
+                rankingAdapter.submitList(rankedUsers)
+
+                val currentUserId = authRepository.getCurrentUser()?.id
+                val userPosition = rankedUsers.indexOfFirst { it.userId == currentUserId } + 1
+
+                if (userPosition > 0) {
+                    binding.tvUserPosition.text = getString(R.string.current_user_position, userPosition)
+                } else {
+                    binding.tvUserPosition.text = getString(R.string.user_not_ranked)
+                }
+            }
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -35,7 +61,18 @@ class RankingFragment : Fragment(R.layout.fragment_ranking) {
             handleLogout()
         }
 
+        setupRecyclerView()
+
         return binding.root
+    }
+
+    private fun setupRecyclerView() {
+        rankingAdapter = RankingAdapter()
+        binding.rvRanking.apply {
+            layoutManager = LinearLayoutManager(requireContext())
+            adapter = rankingAdapter
+            itemAnimator = DefaultItemAnimator()
+        }
     }
 
     private fun handleLogout() {
