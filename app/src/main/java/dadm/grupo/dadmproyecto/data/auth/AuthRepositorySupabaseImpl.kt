@@ -14,7 +14,7 @@ class AuthRepositorySupabaseImpl @Inject constructor(
 
     override suspend fun signInWithEmail(email: String, password: String): Result<Boolean> {
         return try {
-            auth.signInWith(Email) {
+            auth.signInWith(Email, "https://dadm-proyecto.vercel.app/email_verified") {
                 this.email = email
                 this.password = password
             }
@@ -54,6 +54,6 @@ class AuthRepositorySupabaseImpl @Inject constructor(
     }
 
     override suspend fun forgotPassword(email: String) {
-        auth.resetPasswordForEmail(email, "https://ahararm.upv.edu.es/reset_password/index.html")
+        auth.resetPasswordForEmail(email, "https://dadm-proyecto.vercel.app/reset_password")
     }
 }
