@@ -9,5 +9,6 @@ data class User(
     @SerialName("display_name") val displayName: String,
     @SerialName("bio") val bio: String,
     @SerialName("created_at") val createdAt: String? = null,
-    @SerialName("updated_at") val updatedAt: String? = null
+    @SerialName("updated_at") val updatedAt: String? = null,
+    //@SerialName("language") val language: String? = "es",
 )

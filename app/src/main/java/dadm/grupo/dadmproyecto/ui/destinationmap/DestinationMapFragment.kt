@@ -150,6 +150,7 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
     }
 
     // Observa los eventos de navegación desde el ViewModel
+    @SuppressLint("MissingPermission")
     private fun observeNavigationEvents() {
 //        viewLifecycleOwner.lifecycleScope.launch {
 //            repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -371,7 +372,7 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
 
     override fun onStart() {
         super.onStart()
-        binding.mapView.onStart()
+        _binding?.mapView?.onStart()
     }
 
     override fun onResume() {
@@ -409,7 +410,7 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        binding.mapView.onSaveInstanceState(outState)
+        _binding?.mapView?.onSaveInstanceState(outState)
     }
 
     override fun onLowMemory() {

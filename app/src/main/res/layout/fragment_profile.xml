@@ -2,79 +2,101 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/profileLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="24dp">
+    android:padding="24dp"
+    android:background="@color/white">
 
-    <!-- Nombre del usuario -->
-    <TextView
-        android:id="@+id/tvDisplayName"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="Nombre de Usuario"
-        android:textAppearance="?attr/textAppearanceHeadline5"
-        android:textStyle="bold"
+    <!-- Logout button -->
+    <ImageButton
+        android:id="@+id/btnLogout"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="?selectableItemBackgroundBorderless"
+        android:contentDescription="@string/logout_dialog_message"
+        android:src="@drawable/ic_logout"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        app:layout_constraintStart_toStartOf="parent" />
 
-    <!-- Bio del usuario -->
-    <TextView
-        android:id="@+id/tvBio"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="Bio del usuario"
-        android:textAppearance="?attr/textAppearanceBody1"
-        android:gravity="center"
-        android:layout_marginTop="8dp"
-        app:layout_constraintTop_toBottomOf="@id/tvDisplayName"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <!-- Progreso de lugares descubiertos -->
-    <TextView
-        android:id="@+id/tvLocationsDiscovered"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="Has descubierto 5 de 15 lugares secretos"
-        android:textAppearance="?attr/textAppearanceBody2"
-        android:layout_marginTop="16dp"
-        app:layout_constraintTop_toBottomOf="@id/tvBio"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
-
-    <ProgressBar
-        android:id="@+id/progressDiscovered"
-        style="?android:attr/progressBarStyleHorizontal"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:progress="0"
-        android:max="15"
-        android:layout_marginTop="8dp"
-        app:layout_constraintTop_toBottomOf="@id/tvLocationsDiscovered"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <!-- Botón editar perfil -->
-    <Button
-        android:id="@+id/btnEditProfile"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="Editar perfil"
-        app:layout_constraintTop_toBottomOf="@id/progressDiscovered"
-        android:layout_marginTop="24dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <!-- Botón ajustes -->
+    <!-- Settings button (opcional, si lo usas) -->
     <ImageButton
         android:id="@+id/btnSettings"
         android:layout_width="40dp"
         android:layout_height="40dp"
-        android:src="@android:drawable/ic_menu_preferences"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="Ajustes"
+        android:background="?selectableItemBackgroundBorderless"
+        android:contentDescription="@string/go_to_settings"
+        android:src="@drawable/ic_settings"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Profile picture -->
+    <ImageView
+        android:id="@+id/imgProfile"
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:background="@drawable/circle_background"
+        android:scaleType="centerCrop"
+        android:src="@drawable/ic_profile"
+        android:layout_marginTop="64dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btnSettings" />
+
+    <!-- Name -->
+    <TextView
+        android:id="@+id/txtUsername"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Nombre Usuario"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:textColor="@color/black"
+        android:layout_marginTop="16dp"
+        app:layout_constraintTop_toBottomOf="@id/imgProfile"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Bio -->
+    <TextView
+        android:id="@+id/txtBio"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Aquí va la biografía del usuario. Puede ser corta y concisa."
+        android:textSize="14sp"
+        android:textColor="@color/md_theme_secondary"
+        android:textAlignment="center"
+        app:layout_constraintTop_toBottomOf="@id/txtUsername"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Visited places progress -->
+    <TextView
+        android:id="@+id/txtProgressLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Lugares visitados"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:textColor="@color/black"
+        android:layout_marginTop="32dp"
+        app:layout_constraintTop_toBottomOf="@id/txtBio"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <ProgressBar
+        android:id="@+id/progressVisited"
+        style="@android:style/Widget.ProgressBar.Horizontal"
+        android:layout_width="0dp"
+        android:layout_height="8dp"
+        android:progress="40"
+        android:max="100"
+        android:progressTint="@color/md_theme_onBackground"
+        android:backgroundTint="@color/md_theme_secondary"
+        android:layout_marginBottom="24dp"
+        app:layout_constraintTop_toBottomOf="@id/txtProgressLabel"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="8dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -54,8 +54,8 @@ class LoginViewModel @Inject constructor(
 
                             val userData = User(
                                 userId = userId,
-                                displayName = email,
-                                bio = "Lorem ipsum dolor sit amet",
+                                displayName = email.substringBefore("@"),
+                                bio = "Esta es tu biografía.\nPuedes editarla en la sección de configuración.",
                             )
 
                             Log.d("LoginViewModel", "Inserting this User data: $userData")
