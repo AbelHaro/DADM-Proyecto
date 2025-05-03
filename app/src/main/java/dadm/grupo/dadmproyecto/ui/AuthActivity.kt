@@ -36,9 +36,10 @@ class AuthActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         lifecycleScope.launch {
-            checkLoginStatus()
-        }.also {
-            it.invokeOnCompletion {
+            // Check login status first. If logged in, redirectToMain() will be called
+            // and this activity will finish.
+            if (!checkLoginStatus()) {
+                // Only setup UI if the user is not logged in
                 setupUI()
             }
         }
@@ -47,7 +48,7 @@ class AuthActivity : AppCompatActivity() {
     private fun setupUI() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         binding = ActivityAuthBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        setContentView(binding.root) // Set content view only when UI is needed
 
         navController =
             binding.authFragmentContainer.getFragment<NavHostFragment>().navController
@@ -63,7 +64,7 @@ class AuthActivity : AppCompatActivity() {
             insets
         }
 
-        // Check location permission
+        // Check location permission only if the UI is being set up
         if (!hasLocationPermission(this)) {
             requestLocationPermission(this)
         } else if (!hasBackgroundLocationPermission(this)) {
@@ -71,16 +72,17 @@ class AuthActivity : AppCompatActivity() {
         }
     }
 
-    private suspend fun checkLoginStatus() {
-
+    // Return true if redirected, false otherwise
+    private suspend fun checkLoginStatus(): Boolean {
         try {
             if (authRepository.isUserLoggedIn()) {
                 redirectToMain()
+                return true // Indicate redirection happened
             }
         } catch (e: Exception) {
             Log.e("AuthActivity", "Error checking login status: ${e.message}")
-
         }
+        return false // Indicate redirection did not happen
     }
 
     override fun onRequestPermissionsResult(
@@ -93,12 +95,9 @@ class AuthActivity : AppCompatActivity() {
         when (requestCode) {
             1001 -> { // Location permission
                 if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // Permission granted, check for background permission if needed
                     if (!hasBackgroundLocationPermission(this)) {
                         requestBackgroundLocationPermission(this)
-                    } else {
-                        lifecycleScope.launch {
-                            checkLoginStatus()
-                        }
                     }
                 } else {
                     showPermissionDeniedDialog()
@@ -106,11 +105,8 @@ class AuthActivity : AppCompatActivity() {
             }
 
             1002 -> { // Background location permission
-                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    lifecycleScope.launch {
-                        checkLoginStatus()
-                    }
-                } else {
+                if (!(grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                    // Background permission denied
                     showPermissionDeniedDialog()
                 }
             }
