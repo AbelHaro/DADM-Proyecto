@@ -7,9 +7,6 @@ const supabase = createClient(
   import.meta.env.VITE_SUPABASE_ANON_KEY
 );
 
-// print supabase
-console.log("supabase", supabase);
-
 const ResetPassword = () => {
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
@@ -18,20 +15,15 @@ const ResetPassword = () => {
   const [accessToken, setAccessToken] = useState<string | null>(null);
 
   useEffect(() => {
-    // Obtener el access_token del fragmento de la URL (hash)
-    console.log("Intentando obtener el access_token de la URL");
-    console.log("window.location.hash", window.location.hash);
-    console.log("window.location", window.location);
+  
 
     const hash = window.location.hash;
     const token = new URLSearchParams(hash.substring(1)).get('access_token');
     
     if (token) {
-      console.log("Token encontrado en el hash de la URL", token);
       setAccessToken(token);
     } else {
       setMessage('No access token found in URL');
-      console.log("No access token found in URL");
     }
   }, []);
   
