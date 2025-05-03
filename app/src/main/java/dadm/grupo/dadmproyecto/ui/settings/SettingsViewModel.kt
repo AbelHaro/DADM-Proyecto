@@ -1,5 +1,6 @@
 package dadm.grupo.dadmproyecto.ui.settings
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -24,14 +25,25 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun updateUser(username: String, bio: String, password: String?, language: String): Result<Boolean> {
+    fun updateUser(
+        username: String,
+        bio: String,
+        password: String?,
+        language: String
+    ): Result<Boolean> {
         var result: Result<Boolean> = Result.failure(Exception("Operación no iniciada"))
         viewModelScope.launch {
             val currentUser = _user.value ?: return@launch
 
+            Log.d("SettingsDebug", "Current user: $currentUser")
+
             val updatedUser = currentUser.copy(displayName = username, bio = bio)
 
+            Log.d("SettingsDebug", "Updated user: $updatedUser")
+
             result = usersRepository.updateUserData(updatedUser)
+
+            Log.d("SettingsDebug", "Update result: $result")
 
             if (result.isSuccess) {
                 _user.value = updatedUser
@@ -40,9 +52,6 @@ class SettingsViewModel @Inject constructor(
                 // Aquí puedes manejar el error, como mostrar un mensaje al usuario
             }
 
-            password?.let {
-                //usersRepository.updatePassword(it)
-            }
         }
         return result
     }
