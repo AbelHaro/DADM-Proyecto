@@ -3,8 +3,8 @@ import { createClient } from '@supabase/supabase-js';
 
 // Crear el cliente de Supabase usando variables de entorno
 const supabase = createClient(
-  process.env.SUPABASE_URL || '',
-  process.env.SUPABASE_ANON_KEY || ''
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_ANON_KEY
 );
 
 // print supabase
