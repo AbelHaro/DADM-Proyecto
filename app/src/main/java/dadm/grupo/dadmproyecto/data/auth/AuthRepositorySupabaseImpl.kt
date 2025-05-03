@@ -52,4 +52,8 @@ class AuthRepositorySupabaseImpl @Inject constructor(
     override suspend fun getCurrentUser(): UserInfo? {
         return auth.currentUserOrNull()
     }
+
+    override suspend fun forgotPassword(email: String) {
+        auth.resetPasswordForEmail(email, "https://ahararm.upv.edu.es/reset_password/index.html")
+    }
 }

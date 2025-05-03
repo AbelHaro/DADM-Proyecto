@@ -10,13 +10,28 @@
         android:name="dadm.grupo.dadmproyecto.ui.login.LoginFragment"
         android:label="LoginFragment"
         tools:layout="@layout/fragment_login" />
-    <action android:id="@+id/actionLoginFragmentToRegisterFragment"
+    <action
+        android:id="@+id/actionLoginFragmentToRegisterFragment"
         app:destination="@id/registerFragment" />
+    <action
+        android:id="@+id/actionLoginFragmentToForgotPasswordFragment"
+        app:destination="@id/forgotPasswordFragment" />
     <fragment
         android:id="@+id/registerFragment"
         android:name="dadm.grupo.dadmproyecto.ui.register.RegisterFragment"
         android:label="RegisterFragment"
         tools:layout="@layout/fragment_register" />
-    <action android:id="@+id/actionRegisterFragmentToLoginFragment"
+    <action
+        android:id="@+id/actionRegisterFragmentToLoginFragment"
         app:destination="@id/loginFragment" />
+
+    <fragment
+        android:id="@+id/forgotPasswordFragment"
+        android:name="dadm.grupo.dadmproyecto.ui.forgotpassword.ForgotPasswordFragment"
+        android:label="ForgotPasswordFragment"
+        tools:layout="@layout/fragment_forgotpassword" />
+    <action
+        android:id="@+id/actionForgotPasswordFragmentToLoginFragment"
+        app:destination="@id/loginFragment" />
+
 </navigation>
