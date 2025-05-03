@@ -27,7 +27,6 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         super.onViewCreated(view, savedInstanceState)
 
         etUsername = view.findViewById(R.id.etUsername)
-        etPassword = view.findViewById(R.id.etPassword)
         etBio = view.findViewById(R.id.etBio)
         spinnerLanguage = view.findViewById(R.id.spinnerLanguage)
         btnSave = view.findViewById(R.id.btnSaveChanges)
@@ -47,22 +46,33 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
                 //val langPos = if (it.language == "es") 0 else 1
                 //spinnerLanguage.setSelection(langPos)
             }
+
+            viewModel.updateResult.observe(viewLifecycleOwner) { result ->
+                result?.let {
+                    if (it.isSuccess) {
+                        Toast.makeText(
+                            requireContext(),
+                            "Usuario actualizado correctamente",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        requireActivity().onBackPressedDispatcher.onBackPressed()
+                    } else {
+                        Toast.makeText(
+                            requireContext(),
+                            "Error al actualizar el usuario: ${it.exceptionOrNull()?.message}",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            }
         }
 
         btnSave.setOnClickListener {
             val username = etUsername.text.toString()
             val bio = etBio.text.toString()
-            val newPassword = etPassword.text.toString().takeIf { it.isNotBlank() }
             val selectedLanguage = if (spinnerLanguage.selectedItemPosition == 0) "es" else "en"
 
-            val result = viewModel.updateUser(username, bio, newPassword, selectedLanguage)
-
-            if (result.isSuccess) {
-                Toast.makeText(requireContext(), "Usuario actualizado correctamente", Toast.LENGTH_SHORT).show()
-                requireActivity().onBackPressedDispatcher.onBackPressed()
-            } else {
-                Toast.makeText(requireContext(), "Error al actualizar el usuario: ${result.exceptionOrNull()?.message}", Toast.LENGTH_SHORT).show()
-            }
+            viewModel.updateUser(username, bio, selectedLanguage)
         }
     }
 }

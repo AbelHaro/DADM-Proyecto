@@ -5,6 +5,8 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.GridLayout
+import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
@@ -68,7 +70,7 @@ class ProfileFragment : Fragment() {
         }
 
         lifecycleScope.launch {
-            viewModel.locationsVisited.collectLatest { visited ->
+            viewModel.locationsVisitedCount.collectLatest { visited ->
                 updateVisitedLocations(visited)
             }
         }
@@ -107,7 +109,7 @@ class ProfileFragment : Fragment() {
     private fun showUserProfile(user: User) {
         tvDisplayName.text = user.displayName
         tvBio.text = user.bio
-        val visited = viewModel.locationsVisited.value
+        val visited = viewModel.locationsVisitedCount.value
         tvLocationsDiscovered.text = "Has descubierto $visited de $totalLocations lugares secretos"
         progressBar.max = totalLocations
         progressBar.progress = visited

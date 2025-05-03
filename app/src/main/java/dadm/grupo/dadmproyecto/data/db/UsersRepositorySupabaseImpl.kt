@@ -42,9 +42,6 @@ class UsersRepositorySupabaseImpl @Inject constructor(
 
             Log.d("SettingsDebug", "Updated user data: $updatedUser")
 
-            if (updatedUser == null) {
-                return Result.failure(Exception("Error updating user data"))
-            }
             Result.success(true)
         } catch (e: Exception) {
             e.printStackTrace()

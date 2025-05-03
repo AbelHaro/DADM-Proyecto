@@ -19,6 +19,9 @@ class SettingsViewModel @Inject constructor(
     private val _user = MutableLiveData<User?>()
     val user: LiveData<User?> = _user
 
+    private val _updateResult = MutableLiveData<Result<Boolean>>()
+    val updateResult: LiveData<Result<Boolean>> = _updateResult
+
     init {
         viewModelScope.launch {
             _user.value = usersRepository.getMyUserData()
@@ -28,10 +31,8 @@ class SettingsViewModel @Inject constructor(
     fun updateUser(
         username: String,
         bio: String,
-        password: String?,
         language: String
-    ): Result<Boolean> {
-        var result: Result<Boolean> = Result.failure(Exception("Operación no iniciada"))
+    ) {
         viewModelScope.launch {
             val currentUser = _user.value ?: return@launch
 
@@ -41,7 +42,7 @@ class SettingsViewModel @Inject constructor(
 
             Log.d("SettingsDebug", "Updated user: $updatedUser")
 
-            result = usersRepository.updateUserData(updatedUser)
+            val result = usersRepository.updateUserData(updatedUser)
 
             Log.d("SettingsDebug", "Update result: $result")
 
@@ -49,10 +50,9 @@ class SettingsViewModel @Inject constructor(
                 _user.value = updatedUser
             } else {
                 result.exceptionOrNull()?.printStackTrace()
-                // Aquí puedes manejar el error, como mostrar un mensaje al usuario
             }
 
+            _updateResult.value = result // Actualiza el LiveData con el resultado
         }
-        return result
     }
 }
