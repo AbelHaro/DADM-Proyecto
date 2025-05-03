@@ -3,8 +3,8 @@ import { createClient } from '@supabase/supabase-js';
 
 // Crear el cliente de Supabase usando variables de entorno
 const supabase = createClient(
-  "https://idzjjzlrreqfcnakfolk.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkempqemxycmVxZmNuYWtmb2xrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM0MTg3MzIsImV4cCI6MjA1ODk5NDczMn0._ZRLeAiLcJNl2tI6z0LU0wimW_La5O6Xac0giaOOpBU"
+  process.env.SUPABASE_URL || '',
+  process.env.SUPABASE_ANON_KEY || ''
 );
 
 // print supabase
