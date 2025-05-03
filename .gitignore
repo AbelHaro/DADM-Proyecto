@@ -17,3 +17,6 @@ local.properties
 
 # Archivo de configuración de Firebase
 /app/google-services.json
+
+/app/src/auth-services/node_modules
+/app/src/auth-services/dist

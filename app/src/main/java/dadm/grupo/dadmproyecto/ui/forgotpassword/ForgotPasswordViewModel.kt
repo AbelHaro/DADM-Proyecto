@@ -16,8 +16,8 @@ class ForgotPasswordViewModel @Inject constructor(
     private val authRepository: AuthRepository
 ) : ViewModel() {
 
-    private val _resetStatus = MutableLiveData<Boolean>()
-    val resetStatus: LiveData<Boolean> = _resetStatus
+    private val _resetStatus = MutableLiveData<Boolean?>()
+    val resetStatus: LiveData<Boolean?> = _resetStatus
 
     fun validateEmail(email: String): Boolean {
         return Patterns.EMAIL_ADDRESS.matcher(email).matches()
@@ -30,14 +30,15 @@ class ForgotPasswordViewModel @Inject constructor(
             return
         }
 
-
         viewModelScope.launch {
-
-            Log.d("ForgotPassword", "Sending password reset email to $email")
-
-            authRepository.forgotPassword(email)
-
-            _resetStatus.postValue(true)
+            try {
+                Log.d("ForgotPassword", "Sending password reset email to $email")
+                authRepository.forgotPassword(email)
+                _resetStatus.postValue(true)
+            } catch (e: Exception) {
+                Log.e("ForgotPassword", "Error sending password reset email", e)
+                _resetStatus.postValue(false)
+            }
         }
     }
 }

@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
+import com.google.android.material.snackbar.Snackbar
 import dadm.grupo.dadmproyecto.R
 import dadm.grupo.dadmproyecto.databinding.FragmentForgotpasswordBinding
 import dagger.hilt.android.AndroidEntryPoint
@@ -31,19 +32,48 @@ class ForgotPasswordFragment : Fragment(R.layout.fragment_forgotpassword) {
         super.onViewCreated(view, savedInstanceState)
 
         setupListeners()
+        observeViewModel()
     }
 
     private fun setupListeners() {
         binding.btnSendResetEmail.setOnClickListener {
             val email = binding.etEmail.text.toString().trim()
-            if (viewModel.validateEmail(email)) {
-                viewModel.sendPasswordResetEmail(email)
-            }
-
-            binding.btnBackToLogin.setOnClickListener {
-                findNavController().navigate(R.id.actionForgotPasswordFragmentToLoginFragment)
-            }
-
+            viewModel.sendPasswordResetEmail(email)
         }
+
+        binding.btnBackToLogin.setOnClickListener {
+            findNavController().navigate(R.id.actionForgotPasswordFragmentToLoginFragment)
+        }
+    }
+
+    private fun observeViewModel() {
+        viewModel.resetStatus.observe(viewLifecycleOwner) { status ->
+            when (status) {
+                true -> {
+                    Snackbar.make(
+                        binding.root,
+                        "reset_email_sent_success",
+                        Snackbar.LENGTH_SHORT
+                    ).show()
+                    findNavController().navigate(R.id.actionForgotPasswordFragmentToLoginFragment)
+                }
+
+                false -> {
+                    Snackbar.make(
+                        binding.root,
+                        "reset_email_sent_failure",
+                        Snackbar.LENGTH_LONG
+                    ).show()
+                }
+
+                null -> {
+                }
+            }
+        }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }
