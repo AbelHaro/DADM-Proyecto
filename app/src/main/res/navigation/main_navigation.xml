@@ -15,5 +15,37 @@
         android:name="dadm.grupo.dadmproyecto.ui.ranking.RankingFragment"
         android:label="RankingFragment"
         tools:layout="@layout/fragment_ranking" />
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="dadm.grupo.dadmproyecto.ui.profile.ProfileFragment"
+        android:label="Perfil"
+        app:launchSingleTop="true"
+        tools:layout="@layout/fragment_profile">
+        <action
+            android:id="@+id/action_profileFragment_to_settingsFragment"
+            app:destination="@id/settingsFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="dadm.grupo.dadmproyecto.ui.settings.SettingsFragment"
+        android:label="Ajustes"
+        tools:layout="@layout/fragment_settings">
+
+        <!-- Action to navigate to Ranking, popping Settings -->
+        <action
+            android:id="@+id/action_settingsFragment_to_rankingFragment"
+            app:destination="@id/fRankingFragment"
+            app:popUpTo="@id/settingsFragment"
+            app:popUpToInclusive="true" />
+
+        <!-- Action to navigate to Map, popping Settings -->
+        <action
+            android:id="@+id/action_settingsFragment_to_mapFragment"
+            app:destination="@id/fDestinationMapFragment"
+            app:popUpTo="@id/settingsFragment"
+            app:popUpToInclusive="true" />
+
+    </fragment>
 
 </navigation>

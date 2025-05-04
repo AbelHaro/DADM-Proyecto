@@ -61,8 +61,9 @@ class RegisterViewModel @Inject constructor(
 
                         val userData = User(
                             userId = userId,
-                            displayName = email,
-                            bio = "",
+                            displayName = email.substringBefore("@"),
+                            bio = "Esta es tu biografía.\n" +
+                                    "Puedes editarla en la sección de configuración.",
                             createdAt = System.currentTimeMillis().toString(),
                             updatedAt = System.currentTimeMillis().toString()
                         )

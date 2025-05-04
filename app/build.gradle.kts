@@ -133,4 +133,8 @@ dependencies {
     implementation(libs.coil)
 
     implementation(libs.taptargetview)
+
+
+    implementation(libs.glide)
+    ksp(libs.glide.compiler)
 }

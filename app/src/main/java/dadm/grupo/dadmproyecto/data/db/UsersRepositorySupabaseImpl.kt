@@ -1,5 +1,6 @@
 package dadm.grupo.dadmproyecto.data.db
 
+import android.util.Log
 import dadm.grupo.dadmproyecto.data.auth.AuthRepository
 import dadm.grupo.dadmproyecto.domain.model.User
 import io.github.jan.supabase.SupabaseClient
@@ -21,5 +22,30 @@ class UsersRepositorySupabaseImpl @Inject constructor(
             }
             .decodeList<User>()
             .firstOrNull()
+    }
+
+    override suspend fun updateUserData(user: User): Result<Boolean> {
+        return try {
+            Log.d("SettingsDebug", "Updating user data: $user")
+
+            val updatedUser = supabaseClient
+                .from("users").update(
+                    user
+                ) {
+                    select()
+                    filter {
+                        eq("user_id", authRepository.getCurrentUser()?.id ?: "")
+                    }
+                }
+                .decodeList<User>()
+                .firstOrNull()
+
+            Log.d("SettingsDebug", "Updated user data: $updatedUser")
+
+            Result.success(true)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Result.failure(e)
+        }
     }
 }

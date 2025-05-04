@@ -2,6 +2,7 @@
     <string name="app_name">DADMProyecto</string>
     <string name="login">Login</string>
     <string name="username">Username\n</string>
+    <string name="mail">Mail\n</string>
     <string name="password">Password</string>
     <string name="loginTitle">Log into your account</string>
     <string name="registerTitle">Create your account</string>
@@ -35,6 +36,10 @@
     <string name="location_permission_title"> Location Permission Required</string>
     <string name="location_permission_message">Location permission is required to access your location. Please enable it in the app settings.</string>
     <string name="go_to_settings">Go to Settings</string>
+    <string-array name="language_options">
+        <item>Español</item>
+        <item>Inglés</item>
+    </string-array>
     <string name="current_user_position">Your position: %d</string>
     <string name="trophy_icon">Trophy Icon</string>
     <string name="logout">Logout</string>
