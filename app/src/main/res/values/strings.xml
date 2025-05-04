@@ -82,4 +82,5 @@
     <string name="current_location_title">Current Location</string>
     <string name="current_location_description">Click here to center the map on your current location</string>
     <string name="tv_new_location_discovered">New Location Discovered</string>
+    <string name="profile_logout_error">Error login out</string>
 </resources>

@@ -76,7 +76,7 @@ class ProfileFragment : Fragment() {
                     } else {
                         Toast.makeText(
                             requireContext(),
-                            "Error al cerrar sesión",
+                            R.string.profile_logout_error,
                             Toast.LENGTH_SHORT
                         ).show()
                     }
