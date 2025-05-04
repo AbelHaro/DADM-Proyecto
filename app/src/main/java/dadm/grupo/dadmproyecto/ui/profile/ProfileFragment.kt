@@ -137,6 +137,12 @@ class ProfileFragment : Fragment() {
                     setMargins(imageMargin)
                 }
                 layoutParams = params
+
+                setOnClickListener {
+                    val dialogFragment =
+                        LocationDetailDialogFragment.newInstance(location, isVisited)
+                    dialogFragment.show(childFragmentManager, "LocationDetailDialog")
+                }
             }
 
             Glide.with(this@ProfileFragment)
