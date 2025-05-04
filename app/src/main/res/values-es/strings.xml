@@ -49,7 +49,7 @@
     <string name="user_not_ranked">Aún no estás en el ranking</string>
     <string name="forgot_password">¿Has olvidado tu contraseña?</string>
     <string name="forgot_password_title">Olvidé la contraseña</string>
-    <string name="send_reset_email">enviar correo</string>
+    <string name="send_reset_email">Enviar correo</string>
     <string name="profile_picture">foto de perfil</string>
     <string name="location_image">Imagen de la ubicación</string>
     <string name="new_location_discovered">Nueva ubicación descubierta: %1$s</string>
