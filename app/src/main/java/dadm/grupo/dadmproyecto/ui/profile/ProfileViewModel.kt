@@ -29,6 +29,9 @@ class ProfileViewModel @Inject constructor(
     private val _locationsVisited = MutableStateFlow<List<Location>>(emptyList())
     val locationsVisited: StateFlow<List<Location>> get() = _locationsVisited
 
+    private val _allLocations = MutableStateFlow<List<Location>>(emptyList())
+    val allLocations: StateFlow<List<Location>> get() = _allLocations
+
     private val _logoutState = MutableStateFlow<Result<Boolean>?>(null)
     val logoutState: StateFlow<Result<Boolean>?> get() = _logoutState
 
@@ -38,6 +41,7 @@ class ProfileViewModel @Inject constructor(
                 userRepository.getMyUserData()?.let { user ->
                     _userState.value = user
                     loadLocationsVisited(user.userId)
+                    loadAllLocations()
                 } ?: run {
                     // Manejo de error, opcional
                     _userState.value = null
@@ -58,6 +62,18 @@ class ProfileViewModel @Inject constructor(
             e.printStackTrace()
             _locationsVisitedCount.value = 0
             _locationsVisited.value = emptyList()
+        }
+    }
+
+    fun loadAllLocations() {
+        viewModelScope.launch {
+            try {
+                val allLocations = locationsRepository.getLocations()
+                _allLocations.value = allLocations
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _allLocations.value = emptyList()
+            }
         }
     }
 

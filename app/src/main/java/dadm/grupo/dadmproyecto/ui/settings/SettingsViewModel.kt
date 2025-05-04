@@ -28,6 +28,7 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+
     fun updateUser(
         username: String,
         bio: String,
