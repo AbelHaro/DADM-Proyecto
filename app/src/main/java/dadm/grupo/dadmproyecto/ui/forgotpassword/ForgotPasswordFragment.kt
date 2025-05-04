@@ -52,7 +52,7 @@ class ForgotPasswordFragment : Fragment(R.layout.fragment_forgotpassword) {
                 true -> {
                     Snackbar.make(
                         binding.root,
-                        "reset_email_sent_success",
+                        getString(R.string.reset_email_sent_success),
                         Snackbar.LENGTH_SHORT
                     ).show()
                     findNavController().navigate(R.id.actionForgotPasswordFragmentToLoginFragment)
@@ -61,7 +61,7 @@ class ForgotPasswordFragment : Fragment(R.layout.fragment_forgotpassword) {
                 false -> {
                     Snackbar.make(
                         binding.root,
-                        "reset_email_sent_failure",
+                        getString(R.string.reset_email_sent_failure),
                         Snackbar.LENGTH_LONG
                     ).show()
                 }

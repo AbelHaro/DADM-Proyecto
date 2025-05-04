@@ -19,7 +19,7 @@
     <string name="register_error_registration_failed">El registro ha fallado</string>
     <string name="login_error_empty_fields">Por favor, rellena todos los campos</string>
     <string name="login_error_invalid_email">Por favor, introduce una dirección de correo válida</string>
-    <string name="login_error_authentication_failed">Error al iniciar sesión: </string>
+    <string name="login_error_authentication_failed">Error al iniciar sesión</string>
     <string name="login_google_sign_in_not_implemented">El inicio con Google aún no está implementado</string>
     <string name="exit_dialog_title">Salir de la aplicación</string>
     <string name="exit_dialog_message">¿Estás seguro de que quieres salir?</string>
@@ -82,4 +82,6 @@
     <string name="current_location_description">Haz clic aquí para centrar el mapa en tu ubicación actual</string>
     <string name="tv_new_location_discovered">Nueva Ubicación Descubierta</string>
     <string name="profile_logout_error">Error al cerrar sesión</string>
+    <string name="reset_email_sent_success">Correo de restablecimiento enviado</string>
+    <string name="reset_email_sent_failure">Error en el restablecimiento</string>
 </resources>
