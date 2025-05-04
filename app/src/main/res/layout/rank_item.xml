@@ -4,20 +4,22 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="4dp"
+    app:cardBackgroundColor="?attr/colorSurface"
     app:cardCornerRadius="12dp"
     app:cardElevation="4dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingVertical="12dp"
-        android:paddingHorizontal="16dp">
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="12dp">
 
         <TextView
             android:id="@+id/positionTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="1"
+            android:textColor="#000000"
             android:textSize="16sp"
             android:textStyle="bold"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -28,24 +30,27 @@
             android:id="@+id/userNameTextView"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="8dp"
             android:text="Alice"
+            android:textColor="#000000"
             android:textSize="16sp"
-            app:layout_constraintStart_toEndOf="@id/positionTextView"
-            app:layout_constraintTop_toTopOf="@id/positionTextView"
             app:layout_constraintBottom_toBottomOf="@id/positionTextView"
-            app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginStart="12dp" />
+            app:layout_constraintEnd_toStartOf="@id/locationsCountTextView"
+            app:layout_constraintStart_toEndOf="@id/positionTextView"
+            app:layout_constraintTop_toTopOf="@id/positionTextView" />
 
         <TextView
             android:id="@+id/locationsCountTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="5 locations"
+            android:textColor="#000000"
             android:textSize="14sp"
             android:textStyle="italic"
+            app:layout_constraintBottom_toBottomOf="@id/positionTextView"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@id/positionTextView"
-            app:layout_constraintBottom_toBottomOf="@id/positionTextView" />
+            app:layout_constraintTop_toTopOf="@id/positionTextView" />
 
 
     </androidx.constraintlayout.widget.ConstraintLayout>

@@ -22,6 +22,7 @@
         android:padding="16dp"
         android:text="@string/current_user_position"
         android:textAlignment="center"
+        android:textColor="?android:attr/textColorPrimary"
         android:textSize="18sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

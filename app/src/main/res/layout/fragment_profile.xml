@@ -3,13 +3,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="?attr/colorSurface"
     android:fillViewport="true">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/profileLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/white"
         android:padding="24dp">
 
         <!-- Logout button -->
@@ -21,7 +21,8 @@
             android:contentDescription="@string/logout_dialog_message"
             android:src="@drawable/ic_logout"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="?attr/colorControlNormal" />
 
         <!-- Settings button (opcional, si lo usas) -->
         <ImageButton
@@ -32,7 +33,8 @@
             android:contentDescription="@string/go_to_settings"
             android:src="@drawable/ic_settings"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="?attr/colorControlNormal" />
 
         <!-- Profile picture -->
         <ImageView
@@ -54,7 +56,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:text="Nombre Usuario"
-            android:textColor="@color/black"
+            android:textColor="?android:attr/textColorPrimary"
             android:textSize="22sp"
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
@@ -68,7 +70,7 @@
             android:layout_height="wrap_content"
             android:text="Aquí va la biografía del usuario. Puede ser corta y concisa."
             android:textAlignment="center"
-            android:textColor="@color/md_theme_secondary"
+            android:textColor="?android:attr/textColorSecondary"
             android:textSize="14sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -81,7 +83,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="32dp"
             android:text="Lugares visitados"
-            android:textColor="@color/black"
+            android:textColor="?android:attr/textColorPrimary"
             android:textSize="16sp"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
@@ -94,10 +96,10 @@
             android:layout_height="8dp"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="24dp"
-            android:backgroundTint="@color/md_theme_secondary"
             android:max="100"
             android:progress="40"
-            android:progressTint="@color/md_theme_onBackground"
+            android:progressBackgroundTint="?attr/colorSurfaceVariant"
+            android:progressTint="?attr/colorPrimary"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/txtProgressLabel" />
