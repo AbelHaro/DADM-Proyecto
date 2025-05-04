@@ -19,23 +19,32 @@ class RankingViewModel @Inject constructor(
     private val _rankingUsers = MutableStateFlow<List<RankedUser>>(emptyList())
     val rankingUsers: StateFlow<List<RankedUser>> = _rankingUsers.asStateFlow()
 
+    // Add loading state
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
     init {
         loadRanking()
     }
 
-    private fun loadRanking() {
+    fun loadRanking() {
         viewModelScope.launch {
-            val userVisitCounts = locationsVisitedRepository.getUsersOrderedByLocationsVisited()
-            val rankedUsers = userVisitCounts.mapIndexed { index, user ->
-                RankedUser(
-                    userId = user.userId,
-                    displayName = user.displayName,
-                    bio = "",
-                    position = index + 1,
-                    visitCount = user.visitCount
-                )
+            _isLoading.value = true // Start loading
+            try {
+                val userVisitCounts = locationsVisitedRepository.getUsersOrderedByLocationsVisited()
+                val rankedUsers = userVisitCounts.mapIndexed { index, user ->
+                    RankedUser(
+                        userId = user.userId,
+                        displayName = user.displayName,
+                        bio = "",
+                        position = index + 1,
+                        visitCount = user.visitCount
+                    )
+                }
+                _rankingUsers.value = rankedUsers
+            } finally {
+                _isLoading.value = false // Stop loading regardless of success/failure
             }
-            _rankingUsers.value = rankedUsers
         }
     }
 

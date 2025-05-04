@@ -31,6 +31,8 @@ class RankingFragment : Fragment(R.layout.fragment_ranking) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        setupRefreshLayout()
+
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.rankingUsers.collect { rankedUsers ->
                 rankingAdapter.submitList(rankedUsers)
@@ -44,6 +46,12 @@ class RankingFragment : Fragment(R.layout.fragment_ranking) {
                 } else {
                     binding.tvUserPosition.text = getString(R.string.user_not_ranked)
                 }
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.isLoading.collect { isLoading ->
+                binding.swipeRefreshLayout.isRefreshing = isLoading
             }
         }
     }
@@ -69,6 +77,11 @@ class RankingFragment : Fragment(R.layout.fragment_ranking) {
         }
     }
 
+    private fun setupRefreshLayout() {
+        binding.swipeRefreshLayout.setOnRefreshListener {
+            viewModel.loadRanking()
+        }
+    }
 
     override fun onDestroyView() {
         super.onDestroyView()
