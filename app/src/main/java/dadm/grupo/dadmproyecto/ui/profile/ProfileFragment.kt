@@ -100,8 +100,14 @@ class ProfileFragment : Fragment() {
     }
 
     private fun updateVisitedLocationsProgress(visited: Int, total: Int) {
-        binding.txtProgressLabel.text =
-            "Has descubierto $visited de $total lugares secretos"
+
+        binding.txtProgressLabel.text = getString(
+            R.string.profile_progress_label,
+            visited.toString(),
+            total.toString()
+        )
+
+
         binding.progressVisited.max = total
         binding.progressVisited.progress = visited
     }

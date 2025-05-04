@@ -4,16 +4,13 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import dadm.grupo.dadmproyecto.R
 import dadm.grupo.dadmproyecto.databinding.FragmentSettingsBinding
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
-// Remove layout ID from constructor if inflating manually
 class SettingsFragment : Fragment() {
 
     private val viewModel: SettingsViewModel by viewModels()
@@ -35,17 +32,10 @@ class SettingsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val languageAdapter = ArrayAdapter.createFromResource(
-            requireContext(),
-            R.array.language_options,
-            android.R.layout.simple_spinner_item
-        )
-        languageAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        binding.spinnerLanguage.adapter = languageAdapter
+        // Language spinner setup removed - using system language
 
         viewModel.user.observe(viewLifecycleOwner) { user ->
             user?.let {
-
                 binding.etUsername.setText(it.displayName)
                 binding.etBio.setText(it.bio)
             }
@@ -59,6 +49,8 @@ class SettingsFragment : Fragment() {
                         "Usuario actualizado correctamente",
                         Toast.LENGTH_SHORT
                     ).show()
+
+                    // No language change handling needed - just return
                     requireActivity().onBackPressedDispatcher.onBackPressed()
                 } else {
                     Toast.makeText(
@@ -73,13 +65,12 @@ class SettingsFragment : Fragment() {
         binding.btnSaveChanges.setOnClickListener {
             val username = binding.etUsername.text.toString()
             val bio = binding.etBio.text.toString()
-            val selectedLanguage =
-                if (binding.spinnerLanguage.selectedItemPosition == 0) "es" else "en"
 
-            viewModel.updateUser(username, bio, selectedLanguage)
+            // No language parameter needed
+            viewModel.updateUser(username, bio)
         }
     }
-    
+
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null

@@ -427,7 +427,8 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
 
     private fun showNewLocationDiscovered(name: String, bitmap: Bitmap) {
         binding.ivNewLocationDiscovered.setImageBitmap(bitmap)
-        binding.tvNewLocationDiscovered.text = "Nueva ubicación descubierta: $name"
+        binding.tvNewLocationDiscovered.text =
+            getString(R.string.new_location_discovered, name)
 
         binding.ivNewLocationDiscovered.apply {
             alpha = 0f
@@ -716,8 +717,8 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
             .targets(
                 TapTarget.forBounds(
                     targetBounds,
-                    "Explicación del mapa",
-                    "El mapa muestra la ubicación de la UPV y los lugares que has visitado"
+                    getString(R.string.map_tutorial_title),
+                    getString(R.string.map_tutorial_description)
                 )
                     .id(0)
                     .textColor(android.R.color.white)
@@ -727,8 +728,8 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
 
                 TapTarget.forView(
                     binding.fabMain,
-                    "Estilos de Mapa",
-                    "Haz clic aquí para cambiar el estilo del mapa"
+                    getString(R.string.map_styles_title),
+                    getString(R.string.map_styles_description)
                 )
                     .id(ID_MAP_STYLE_FAB)
                     .transparentTarget(true) // deja ver el botón exactamente igual
@@ -738,8 +739,8 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
 
                 TapTarget.forView(
                     binding.fabStyleSatellite,
-                    "Estilo Satélite",
-                    "Haz clic aquí para cambiar al estilo satélite"
+                    getString(R.string.satellite_style_title),
+                    getString(R.string.satellite_style_description)
                 )
                     .id(ID_MAP_STYLE_SATELLITE)
                     .transparentTarget(true) // deja ver el botón exactamente igual
@@ -749,8 +750,8 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
 
                 TapTarget.forView(
                     binding.fabStyleStandard,
-                    "Estilo Estándar",
-                    "Haz clic aquí para cambiar al estilo estándar"
+                    getString(R.string.standard_style_title),
+                    getString(R.string.standard_style_description)
                 )
                     .id(ID_MAP_STYLE_STANDARD)
                     .transparentTarget(true) // deja ver el botón exactamente igual
@@ -759,8 +760,8 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
                     .cancelable(false), // FAB estilo estándar
                 TapTarget.forView(
                     binding.fabCenterLocation,
-                    "Ubicación Actual",
-                    "Haz clic aquí para centrar el mapa en tu ubicación actual"
+                    getString(R.string.current_location_title),
+                    getString(R.string.current_location_description)
                 )
                     .id(ID_MAP_CENTER_LOCATION)
                     .transparentTarget(true) // deja ver el botón exactamente igual

@@ -78,7 +78,7 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
                             getString(
                                 R.string.register_error_registration_failed,
 
-                                ) + errorMessage
+                                )
                         )
                     }
                 }

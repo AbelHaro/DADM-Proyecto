@@ -7,7 +7,7 @@ import io.github.jan.supabase.gotrue.user.UserInfo
 import javax.inject.Inject
 
 class AuthRepositorySupabaseImpl @Inject constructor(
-    private val supabaseClient: SupabaseClient
+    supabaseClient: SupabaseClient
 ) : AuthRepository {
 
     private val auth = supabaseClient.auth

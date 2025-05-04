@@ -1,4 +1,5 @@
 <resources>
+
     <string name="app_name">DADMProyecto</string>
     <string name="login">Login</string>
     <string name="username">Username\n</string>
@@ -37,9 +38,12 @@
     <string name="location_permission_message">Location permission is required to access your location. Please enable it in the app settings.</string>
     <string name="go_to_settings">Go to Settings</string>
     <string-array name="language_options">
-        <item>Español</item>
-        <item>Inglés</item>
+        <item>Default</item>
+        <item>Spanish</item>
+        <item>English</item>
     </string-array>
+    <string name="user_updated_successfully">User updated successfully</string>
+    <string name="user_update_failed">Error updating user</string>
     <string name="current_user_position">Your position: %d</string>
     <string name="trophy_icon">Trophy Icon</string>
     <string name="logout">Logout</string>
@@ -47,4 +51,35 @@
     <string name="forgot_password">Forgot Password?</string>
     <string name="forgot_password_title">Forgot password</string>
     <string name="send_reset_email">send email</string>
+    <string name="profile_picture">profile picture</string>
+    <string name="location_image">Location Image</string>
+    <string name="new_location_discovered">New location discovered: %1$s</string>
+    <string name="change_style_to_standard">Change style to Standard</string>
+    <string name="change_style_to_satellite">Change style to Satellite</string>
+    <string name="main_menu">Main menu</string>
+    <string name="center_location">Center location</string>
+    <string name="user_name">User name</string>
+    <string name="user_bio">Here is a short bio about the user. It can be a bit longer to give more information.</string>
+    <string name="visited_places">visited places</string>
+    <string name="edit_profile">Edit Profile</string>
+    <string name="biography">Biography</string>
+    <string name="save_changes">Save Changes</string>
+    <string name="map">Map</string>
+    <string name="ranking">Ranking</string>
+    <string name="profile">Profile</string>
+    <string name="_1">1</string>
+    <string name="alice">Alice</string>
+    <string name="_5_locations">5 locations</string>
+    <string name="profile_progress_label">"You have discovered %1$s of %2$s locations"</string>
+    <string name="map_tutorial_title">Map Explanation</string>
+    <string name="map_tutorial_description">The map shows the UPV location and the places you have visited</string>
+    <string name="map_styles_title">Map Styles</string>
+    <string name="map_styles_description">Click here to change the map style</string>
+    <string name="satellite_style_title">Satellite Style</string>
+    <string name="satellite_style_description">Click here to switch to satellite style</string>
+    <string name="standard_style_title">Standard Style</string>
+    <string name="standard_style_description">Click here to switch to standard style</string>
+    <string name="current_location_title">Current Location</string>
+    <string name="current_location_description">Click here to center the map on your current location</string>
+    <string name="tv_new_location_discovered">New Location Discovered</string>
 </resources>

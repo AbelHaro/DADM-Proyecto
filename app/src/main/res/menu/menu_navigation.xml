@@ -2,22 +2,19 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/fDestinationMapFragment"
-        android:title="Map"
         android:checkable="true"
         android:icon="@drawable/map_icon"
-        />
+        android:title="@string/map" />
     <item
         android:id="@+id/fRankingFragment"
-        android:title="Ranking"
-        android:icon="@drawable/ranking_icon"
         android:checkable="true"
-        />
+        android:icon="@drawable/ranking_icon"
+        android:title="@string/ranking" />
 
     <item
         android:id="@+id/profileFragment"
-        android:title="Profile"
-        android:icon="@drawable/icon_plus"
         android:checkable="true"
-    />
+        android:icon="@drawable/icon_plus"
+        android:title="@string/profile" />
 
 </menu>

@@ -43,8 +43,6 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
     private fun setupClickListeners() {
         binding.btnGoToRegister.setOnClickListener { navigateToRegister() }
         binding.btnLogin.setOnClickListener { handleLogin() }
-        binding.btnGoToMainActivityUnlogged.setOnClickListener { navigateToMainActivity() }
-        binding.btnGoToMainActivityLogged.setOnClickListener { navigateToMainActivityLogged() }
         binding.tvForgotPassword.setOnClickListener { navigateToForgotPassword() }
 
     }
@@ -71,9 +69,8 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
                     } else {
                         showToast(
                             getString(
-                                R.string.login_error_authentication_failed,
-
-                                ) + errorMessage.toString()
+                                R.string.login_error_authentication_failed
+                            )
                         )
                     }
                 }
@@ -94,23 +91,6 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
         requireActivity().finish()
     }
 
-    private fun navigateToMainActivityLogged() {
-        val email = "test@gmail.com"
-        val password = "test123"
-
-        viewModel.loginUser(email, password) { success, errorMessage ->
-            if (success) {
-                navigateToMainActivity()
-            } else {
-                showToast(
-                    getString(
-                        R.string.login_error_authentication_failed,
-                    ) + errorMessage.toString()
-                )
-            }
-        }
-    }
-    
 
     private fun isValidEmail(email: String): Boolean {
         return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
