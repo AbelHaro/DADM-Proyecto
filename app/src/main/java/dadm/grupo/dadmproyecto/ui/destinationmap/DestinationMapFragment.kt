@@ -29,6 +29,8 @@ import dadm.grupo.dadmproyecto.databinding.FragmentDestinationMapBinding
 import dadm.grupo.dadmproyecto.utils.LoadImageUtils.createCircularBitmapFromBitmap
 import dadm.grupo.dadmproyecto.utils.LoadImageUtils.loadBitmapFromUrl
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.maplibre.android.MapLibre
@@ -298,32 +300,66 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
                     if (newLocations.isNotEmpty()) {
                         Log.d(
                             "DestinationMapFragment",
-                            "Adding ${newLocations.size} new visited locations"
+                            "Adding ${newLocations.size} new visited locations concurrently"
                         )
 
-                        // Add markers only for new locations
-                        newLocations.forEach { location ->
-                            val latLng = LatLng(location.latitude, location.longitude)
-                            loadBitmapFromUrl(location.imageUrl)?.let { bitmap ->
-                                val circularBitmap =
-                                    createCircularBitmapFromBitmap(bitmap, targetSize = 125)
-                                val icon =
-                                    IconFactory.getInstance(requireContext())
-                                        .fromBitmap(circularBitmap)
-
-                                val marker = mapLibreMap?.addMarker(
-                                    MarkerOptions()
-                                        .position(latLng)
-                                        .title(location.name)
-                                        .snippet(location.description)
-                                        .icon(icon)
-                                )
-
-                                marker?.let {
-                                    markerOriginalBitmaps[it] = circularBitmap
-                                    // Track that we've added this location
-                                    addedLocationIds.add(location.id)
+                        // Launch a new coroutine to handle concurrent loading and marker addition
+                        viewLifecycleOwner.lifecycleScope.launch {
+                            val markerDataDeferred = newLocations.map { location ->
+                                // Launch concurrent bitmap loading on IO dispatcher
+                                async(kotlinx.coroutines.Dispatchers.IO) {
+                                    val bitmap = loadBitmapFromUrl(location.imageUrl)
+                                    // Prepare data needed for marker creation
+                                    Triple(
+                                        location,
+                                        LatLng(location.latitude, location.longitude),
+                                        bitmap
+                                    )
                                 }
+                            }
+
+                            // Await all loading tasks to complete
+                            val markerDataResults = markerDataDeferred.awaitAll()
+
+                            // Switch back to the Main thread to update the UI (add markers)
+                            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                                markerDataResults.forEach { (location, latLng, bitmap) ->
+                                    bitmap?.let { loadedBitmap ->
+                                        val circularBitmap =
+                                            createCircularBitmapFromBitmap(
+                                                loadedBitmap,
+                                                targetSize = 125
+                                            )
+                                        val icon =
+                                            IconFactory.getInstance(requireContext())
+                                                .fromBitmap(circularBitmap)
+
+                                        val marker = mapLibreMap?.addMarker(
+                                            MarkerOptions()
+                                                .position(latLng)
+                                                .title(location.name)
+                                                .snippet(location.description)
+                                                .icon(icon)
+                                        )
+
+                                        marker?.let {
+                                            markerOriginalBitmaps[it] = circularBitmap
+                                            // Track that we've added this location
+                                            addedLocationIds.add(location.id)
+                                            Log.d(
+                                                "DestinationMapFragment",
+                                                "Added marker for: ${location.name}"
+                                            )
+                                        }
+                                    } ?: Log.w(
+                                        "DestinationMapFragment",
+                                        "Failed to load bitmap for: ${location.name}"
+                                    )
+                                }
+                                Log.d(
+                                    "DestinationMapFragment",
+                                    "Finished adding markers for new locations."
+                                )
                             }
                         }
                     }
@@ -331,6 +367,7 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
             }
         }
     }
+
 
     private fun setupMapListeners(map: MapLibreMap) {
         map.addOnMapClickListener { point ->
