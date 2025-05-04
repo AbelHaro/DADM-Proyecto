@@ -15,7 +15,7 @@
     <string name="sign_in_with_google">Sign In with Google</string>
     <string name="register_error_empty_fields">All fields must be completed</string>
     <string name="register_error_invalid_email">Invalid email format</string>
-    <string name="register_error_weak_password">The password must be 8 characters long including letters and numbers</string>
+    <string name="register_error_weak_password">Min. 8 chars, 1 uppercase, letters and numbers</string>
     <string name="register_error_password_mismatch">The passwords don\'t match</string>
     <string name="register_error_registration_failed">The registration has failed</string>
     <string name="login_error_empty_fields">Please fill in all fields</string>
@@ -82,5 +82,5 @@
     <string name="current_location_title">Current Location</string>
     <string name="current_location_description">Click here to center the map on your current location</string>
     <string name="tv_new_location_discovered">New Location Discovered</string>
-    <string name="profile_logout_error">Error login out</string>
+    <string name="profile_logout_error">Error in logout\n</string>
 </resources>

@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Rect
 import android.os.Bundle
@@ -633,6 +634,13 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
     }
 
     private fun animateMenuOpen(isOpen: Boolean) {
+        val orientation = resources.configuration.orientation
+        val isLandscape = orientation == Configuration.ORIENTATION_LANDSCAPE
+
+        Log.d("DebugOrientation", "Orientation: $orientation, Is Landscape: $isLandscape")
+
+        val translationValue = 100f // Distance to translate
+
         if (isOpen) {
             binding.fabStyleStandard.show()
             binding.fabStyleSatellite.show()
@@ -640,38 +648,81 @@ class DestinationMapFragment : Fragment(), OnMapReadyCallback {
             binding.fabStyleStandard.alpha = 0f
             binding.fabStyleSatellite.alpha = 0f
 
-            binding.fabStyleStandard.translationY = 100f
-            binding.fabStyleSatellite.translationY = 100f
+            if (isLandscape) {
+                binding.fabStyleStandard.translationX = translationValue
+                binding.fabStyleSatellite.translationX = translationValue
 
-            binding.fabStyleStandard.animate()
-                .alpha(1f)
-                .translationY(0f)
-                .setDuration(300)
-                .start()
+                binding.fabStyleStandard.animate()
+                    .alpha(1f)
+                    .translationX(0f)
+                    .setDuration(300)
+                    .start()
 
-            binding.fabStyleSatellite.animate()
-                .alpha(1f)
-                .translationY(0f)
-                .setDuration(300)
-                .setStartDelay(50)
-                .start()
-        } else {
-            binding.fabStyleStandard.animate()
-                .alpha(0f)
-                .translationY(100f)
-                .setDuration(300)
-                .start()
+                binding.fabStyleSatellite.animate()
+                    .alpha(1f)
+                    .translationX(0f)
+                    .setDuration(300)
+                    .setStartDelay(50)
+                    .start()
+            } else { // Portrait
+                binding.fabStyleStandard.translationY = translationValue
+                binding.fabStyleSatellite.translationY = translationValue
 
-            binding.fabStyleSatellite.animate()
-                .alpha(0f)
-                .translationY(100f)
-                .setDuration(300)
-                .setStartDelay(50)
-                .withEndAction {
-                    binding.fabStyleStandard.hide()
-                    binding.fabStyleSatellite.hide()
-                }
-                .start()
+                binding.fabStyleStandard.animate()
+                    .alpha(1f)
+                    .translationY(0f)
+                    .setDuration(300)
+                    .start()
+
+                binding.fabStyleSatellite.animate()
+                    .alpha(1f)
+                    .translationY(0f)
+                    .setDuration(300)
+                    .setStartDelay(50)
+                    .start()
+            }
+        } else { // Closing animation
+            if (isLandscape) {
+                binding.fabStyleStandard.animate()
+                    .alpha(0f)
+                    .translationX(translationValue)
+                    .setDuration(300)
+                    .start()
+
+                binding.fabStyleSatellite.animate()
+                    .alpha(0f)
+                    .translationX(translationValue)
+                    .setDuration(300)
+                    .setStartDelay(50)
+                    .withEndAction {
+                        binding.fabStyleStandard.hide()
+                        binding.fabStyleSatellite.hide()
+                        // Reset translation for next time
+                        binding.fabStyleStandard.translationX = 0f
+                        binding.fabStyleSatellite.translationX = 0f
+                    }
+                    .start()
+            } else { // Portrait
+                binding.fabStyleStandard.animate()
+                    .alpha(0f)
+                    .translationY(translationValue)
+                    .setDuration(300)
+                    .start()
+
+                binding.fabStyleSatellite.animate()
+                    .alpha(0f)
+                    .translationY(translationValue)
+                    .setDuration(300)
+                    .setStartDelay(50)
+                    .withEndAction {
+                        binding.fabStyleStandard.hide()
+                        binding.fabStyleSatellite.hide()
+                        // Reset translation for next time
+                        binding.fabStyleStandard.translationY = 0f
+                        binding.fabStyleSatellite.translationY = 0f
+                    }
+                    .start()
+            }
         }
     }
 

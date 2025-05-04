@@ -60,7 +60,7 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
             }
 
             !isValidPassword(password) -> {
-                showToast(getString(R.string.register_error_weak_password))
+                showToast(getString(R.string.register_error_weak_password), Toast.LENGTH_LONG)
                 return
             }
 
@@ -97,7 +97,8 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
     private fun isValidPassword(password: String): Boolean {
         return password.length >= 8 &&
                 password.any { it.isDigit() } &&
-                password.any { it.isLetter() }
+                password.any { it.isLetter() } &&
+                password.any { it.isUpperCase() }
     }
 
     private fun showToast(message: String, duration: Int = Toast.LENGTH_SHORT) {

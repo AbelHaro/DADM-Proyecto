@@ -14,7 +14,7 @@
     <string name="sign_in_with_google">Iniciar sesión con Google</string>
     <string name="register_error_empty_fields">Todos los campos deben ser completados</string>
     <string name="register_error_invalid_email">Formato de correo inválido</string>
-    <string name="register_error_weak_password">La contraseña debe tener 8 caracteres incluyendo letras y números</string>
+    <string name="register_error_weak_password">Mín. 8 caracteres, 1 mayúscula, letras y números</string>
     <string name="register_error_password_mismatch">Las contraseñas no coinciden</string>
     <string name="register_error_registration_failed">El registro ha fallado</string>
     <string name="login_error_empty_fields">Por favor, rellena todos los campos</string>
