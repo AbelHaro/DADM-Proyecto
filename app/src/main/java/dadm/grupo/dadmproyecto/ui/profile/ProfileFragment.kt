@@ -10,11 +10,14 @@ import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.view.setMargins
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import com.bumptech.glide.Glide
 import dadm.grupo.dadmproyecto.R
+import dadm.grupo.dadmproyecto.domain.model.Location
 import dadm.grupo.dadmproyecto.domain.model.User
 import dadm.grupo.dadmproyecto.ui.AuthActivity
 import dagger.hilt.android.AndroidEntryPoint
@@ -28,10 +31,10 @@ class ProfileFragment : Fragment() {
     private lateinit var tvBio: TextView
     private lateinit var tvLocationsDiscovered: TextView
     private lateinit var progressBar: ProgressBar
+    private lateinit var gridVisitedLocations: GridLayout
 
     private val totalLocations = 15
 
-    // Usa tu factory si es necesario
     private val viewModel: ProfileViewModel by viewModels()
 
     override fun onCreateView(
@@ -43,6 +46,7 @@ class ProfileFragment : Fragment() {
         tvBio = view.findViewById(R.id.txtBio)
         tvLocationsDiscovered = view.findViewById(R.id.txtProgressLabel)
         progressBar = view.findViewById(R.id.progressVisited)
+        gridVisitedLocations = view.findViewById(R.id.gridVisitedLocations)
 
         view.findViewById<View>(R.id.btnLogout).setOnClickListener {
             // TODO: Navegar a editar perfil
@@ -76,16 +80,24 @@ class ProfileFragment : Fragment() {
         }
 
         lifecycleScope.launch {
+            viewModel.locationsVisited.collectLatest { locations: List<Location> ->
+                populateVisitedLocationsGrid(locations)
+            }
+        }
+
+        lifecycleScope.launch {
             viewModel.logoutState.collectLatest { result ->
                 result?.let {
                     if (it.isSuccess) {
-                        // Navegar a la pantalla de inicio de sesión
                         val intent = Intent(requireActivity(), AuthActivity::class.java)
                         startActivity(intent)
                         requireActivity().finish()
                     } else {
-                        // Mostrar un mensaje de error
-                        Toast.makeText(requireContext(), "Error al cerrar sesión", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            requireContext(),
+                            "Error al cerrar sesión",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                 }
             }
@@ -104,14 +116,38 @@ class ProfileFragment : Fragment() {
     private fun updateVisitedLocations(visited: Int) {
         tvLocationsDiscovered.text = "Has descubierto $visited de $totalLocations lugares secretos"
         progressBar.progress = visited
+        progressBar.max = totalLocations
     }
 
     private fun showUserProfile(user: User) {
         tvDisplayName.text = user.displayName
         tvBio.text = user.bio
-        val visited = viewModel.locationsVisitedCount.value
-        tvLocationsDiscovered.text = "Has descubierto $visited de $totalLocations lugares secretos"
-        progressBar.max = totalLocations
-        progressBar.progress = visited
+    }
+
+    private fun populateVisitedLocationsGrid(locations: List<Location>) {
+        gridVisitedLocations.removeAllViews()
+
+        val imageMargin = 20
+        val imageTargetSize = 200
+
+        locations.forEach { location ->
+            val imageView = ImageView(requireContext()).apply {
+                val params = GridLayout.LayoutParams().apply {
+                    width = GridLayout.LayoutParams.WRAP_CONTENT
+                    height = GridLayout.LayoutParams.WRAP_CONTENT
+                    setMargins(imageMargin)
+                }
+                layoutParams = params
+            }
+
+            Glide.with(this@ProfileFragment)
+                .load(location.imageUrl)
+                .override(imageTargetSize, imageTargetSize)
+                .centerCrop()
+                .circleCrop()
+                .into(imageView)
+
+            gridVisitedLocations.addView(imageView)
+        }
     }
 }

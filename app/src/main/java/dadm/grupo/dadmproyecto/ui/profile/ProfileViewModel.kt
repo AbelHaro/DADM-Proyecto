@@ -3,10 +3,10 @@ package dadm.grupo.dadmproyecto.ui.profile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dadm.grupo.dadmproyecto.data.auth.AuthRepository
-import dadm.grupo.dadmproyecto.data.db.LocationsVisitedRepository
-import dadm.grupo.dadmproyecto.domain.model.User
+import dadm.grupo.dadmproyecto.data.db.LocationsRepository
 import dadm.grupo.dadmproyecto.data.db.UsersRepository
-import dadm.grupo.dadmproyecto.domain.model.LocationVisited
+import dadm.grupo.dadmproyecto.domain.model.Location
+import dadm.grupo.dadmproyecto.domain.model.User
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,7 +16,7 @@ import javax.inject.Inject
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val userRepository: UsersRepository,
-    private val vistedRepository: LocationsVisitedRepository,
+    private val locationsRepository: LocationsRepository,
     private val authRepository: AuthRepository
 ) : ViewModel() {
 
@@ -26,8 +26,8 @@ class ProfileViewModel @Inject constructor(
     private val _locationsVisitedCount = MutableStateFlow(0)
     val locationsVisitedCount: StateFlow<Int> get() = _locationsVisitedCount
 
-    private val _locationsVisited = MutableStateFlow<List<LocationVisited>>(emptyList())
-    val locationsVisited: StateFlow<List<LocationVisited>> get() = _locationsVisited
+    private val _locationsVisited = MutableStateFlow<List<Location>>(emptyList())
+    val locationsVisited: StateFlow<List<Location>> get() = _locationsVisited
 
     private val _logoutState = MutableStateFlow<Result<Boolean>?>(null)
     val logoutState: StateFlow<Result<Boolean>?> get() = _logoutState
@@ -51,12 +51,13 @@ class ProfileViewModel @Inject constructor(
 
     private suspend fun loadLocationsVisited(userId: String) {
         try {
-            val visitedLocations = vistedRepository.getMyLocationsVisited(userId)
+            val visitedLocations = locationsRepository.getMyLocationsVisited(userId)
             _locationsVisited.value = visitedLocations
             _locationsVisitedCount.value = visitedLocations.size
         } catch (e: Exception) {
             e.printStackTrace()
             _locationsVisitedCount.value = 0
+            _locationsVisited.value = emptyList()
         }
     }
 
