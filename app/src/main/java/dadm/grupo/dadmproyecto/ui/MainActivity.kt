@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
@@ -48,9 +49,16 @@ class MainActivity : AppCompatActivity() {
         navController = binding.fcvActivityMain.getFragment<NavHostFragment>().navController
         binding.bnvActivityMain.setupWithNavController(navController)
 
-        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, insets ->
+        // Apply padding for system bars specifically to the BottomNavigationView
+        ViewCompat.setOnApplyWindowInsetsListener(binding.bnvActivityMain) { view, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            view.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            // Apply padding for left, right, and bottom insets
+            view.updatePadding(
+                left = systemBars.left,
+                right = systemBars.right,
+                bottom = systemBars.bottom
+            )
+            // Return the insets for potential consumption by other views if needed
             insets
         }
 
